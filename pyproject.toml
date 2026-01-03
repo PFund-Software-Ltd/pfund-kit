@@ -10,13 +10,12 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "rich>=14.2.0",
-    "tqdm>=4.67.1",
     "click>=8.1.8",
     "trogon>=0.6.0",
     "pyyaml>=6.0.3",
     "platformdirs>=4.2.2",
     "python-dotenv>=1.2.1",
-    "prompt-toolkit>=3.0.52",
+    "prompt-toolkit>=3.0.51",
 ]
 
 [project.scripts]
