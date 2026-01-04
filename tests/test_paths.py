@@ -270,6 +270,22 @@ class TestProjectPathsInheritance:
 class TestEnsureDirs:
     """Test the ensure_dirs method using mocked platformdirs (hermetic tests)."""
     
+    def test_auto_create_enabled(self, tmp_path, mock_platformdirs):
+        """Test that auto_create=True creates directories automatically."""
+        package_dir = tmp_path / "test_pkg"
+        module_file = package_dir / "test.py"
+        module_file.parent.mkdir(parents=True)
+        module_file.touch()
+        
+        # auto_create=True by default
+        paths = ProjectPaths(source_file=str(module_file))
+        
+        # Directories should already exist
+        assert paths.log_path.exists()
+        assert paths.data_path.exists()
+        assert paths.cache_path.exists()
+        assert paths.config_path.exists()
+    
     def test_ensure_dirs_creates_directories(self, tmp_path, mock_platformdirs):
         """Test that ensure_dirs creates directories in the mocked location."""
         # Create a test structure
@@ -278,7 +294,7 @@ class TestEnsureDirs:
         module_file.parent.mkdir(parents=True)
         module_file.touch()
         
-        paths = ProjectPaths(source_file=str(module_file))
+        paths = ProjectPaths(source_file=str(module_file), auto_create=False)
         
         # Verify directories don't exist yet
         assert not paths.log_path.exists()
@@ -306,7 +322,7 @@ class TestEnsureDirs:
         module_file.parent.mkdir(parents=True)
         module_file.touch()
         
-        paths = ProjectPaths(source_file=str(module_file))
+        paths = ProjectPaths(source_file=str(module_file), auto_create=False)
         
         # Ensure only log and data paths
         paths.ensure_dirs('log_path', 'data_path')

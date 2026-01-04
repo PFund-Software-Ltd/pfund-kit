@@ -31,7 +31,7 @@ def _detect_project_layout(source_file: Path) -> tuple[str, Path]:
 class ProjectPaths:
     """Base class for managing project paths across pfund ecosystem."""
     
-    def __init__(self, project_name: str | None = None, source_file: str | None = None):
+    def __init__(self, project_name: str | None = None, source_file: str | None = None, auto_create: bool = True):
         """
         Initialize project paths.
         
@@ -39,6 +39,7 @@ class ProjectPaths:
             project_name: Name of the project. If None, auto-detects from source file.
             source_file: Path to a source file for determining project layout. 
                         If None, auto-detects from the caller's __file__.
+            auto_create: If True, automatically creates user directories on initialization.
         """
         if source_file is None:
             frame = inspect.currentframe().f_back
@@ -54,6 +55,9 @@ class ProjectPaths:
         
         # Setup paths with detected package path
         self._setup_paths(detected_package)
+        
+        if auto_create:
+            self.ensure_dirs()
     
     def _setup_paths(self, package_path: Path):
         """
