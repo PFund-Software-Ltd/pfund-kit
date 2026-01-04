@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from pfund_kits.enums.notebook_type import NotebookType
 
 import os
+import timeit
 import logging
 import datetime
 
@@ -63,3 +64,95 @@ def get_notebook_type() -> NotebookType | None:
     
     # None means not in a notebook environment
     return None
+
+
+def time_import(package_name: str, repeat: int = 5, verbose: bool = True) -> dict:
+    """
+    Time how long it takes to import a package.
+    
+    Uses Python's `timeit` module internally. The package (and all its 
+    submodules) are fully unloaded from `sys.modules` before each timing run
+    to ensure accurate "cold import" measurement.
+    
+    Args:
+        package_name: Name of the package to import (e.g., 'numpy', 'pandas').
+        repeat: Number of timing runs (-r in timeit). Default is 5.
+            More runs → better statistics.
+        verbose: If True, print timing results to stdout.
+    
+    Returns:
+        A dict containing:
+            - 'best': Minimum time (seconds) - the most meaningful metric
+            - 'worst': Maximum time (seconds)
+            - 'mean': Mean time (seconds)
+            - 'stdev': Standard deviation (seconds), None if repeat < 2
+            - 'times': List of all measured times (seconds)
+            - 'modules_loaded': List of modules loaded by this import
+            - 'package': The package that was timed
+            - 'repeat': Number of runs performed
+    
+    Example:
+        >>> result = time_import('numpy', repeat=3)
+        Timing 'numpy' (3 runs)...
+          best:    89.23 ms
+          worst:  102.45 ms
+          mean:    94.67 ms ± 5.12 ms
+          modules loaded: 42
+    
+    Note:
+        The 'best' time is typically most meaningful - it represents the import
+        with minimal system interference (same reasoning as timeit's min()).
+    """
+    import sys
+    
+    # Capture modules before import to calculate what was loaded
+    modules_before = set(sys.modules.keys())
+    
+    # Setup code: fully unload the package and all submodules
+    setup = f'''import sys
+to_remove = [k for k in sys.modules if k == "{package_name}" or k.startswith("{package_name}.")]
+for k in to_remove:
+    del sys.modules[k]
+'''
+    stmt = f'__import__("{package_name}")'
+    
+    # timeit.repeat handles GC disabling and uses time.perf_counter()
+    times = timeit.repeat(stmt, setup, repeat=repeat, number=1)
+    
+    # Calculate what modules were loaded
+    modules_after = set(sys.modules.keys())
+    modules_loaded = sorted(modules_after - modules_before)
+    
+    best = min(times)
+    worst = max(times)
+    mean = sum(times) / len(times)
+    
+    # Calculate standard deviation (sample stdev, n-1 denominator)
+    if repeat >= 2:
+        variance = sum((t - mean) ** 2 for t in times) / (repeat - 1)
+        stdev = variance ** 0.5
+    else:
+        stdev = None
+    
+    result = {
+        'best': best,
+        'worst': worst,
+        'mean': mean,
+        'stdev': stdev,
+        'times': times,
+        'modules_loaded': modules_loaded,
+        'package': package_name,
+        'repeat': repeat,
+    }
+    
+    if verbose:
+        print(f"Timing '{package_name}' ({repeat} runs)...")
+        print(f"  best:   {best * 1000:>8.2f} ms")
+        print(f"  worst:  {worst * 1000:>8.2f} ms")
+        if stdev is not None:
+            print(f"  mean:   {mean * 1000:>8.2f} ms ± {stdev * 1000:.2f} ms")
+        else:
+            print(f"  mean:   {mean * 1000:>8.2f} ms")
+        print(f"  modules loaded: {len(modules_loaded)}")
+    
+    return result
