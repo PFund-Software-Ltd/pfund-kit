@@ -10,6 +10,17 @@ import logging
 import datetime
 
 
+__all__ = [
+    'load_env_file',
+    'get_free_port',
+    'get_last_modified_time',
+    'print_all_loggers',
+    'get_notebook_type',
+    'deep_merge',
+    'time_import',
+]
+
+
 def load_env_file(env: str = '', verbose: bool = False) -> str | None:
     """
     Load environment-specific .env file.
@@ -91,6 +102,57 @@ def get_notebook_type() -> NotebookType | None:
     
     # None means not in a notebook environment
     return None
+
+
+def deep_merge(base: dict, override: dict) -> dict:
+    """
+    Recursively merge override into base. Returns a new dict (non-mutating).
+
+    Args:
+        base: The base dictionary to merge into.
+        override: The dictionary whose values take precedence.
+
+    Returns:
+        A new merged dictionary.
+
+    Raises:
+        TypeError: If base or override is not a dict.
+
+    Behavior:
+        - Keys only in base: kept
+        - Keys only in override: added
+        - Keys in both:
+            - Both are dicts: recursive deep merge
+            - Both are lists: concatenate (base_list + override_list)
+            - Otherwise: override value wins
+        - None is treated as a normal value (not as a deletion signal)
+
+    Example:
+        >>> base = {"logging": {"level": "DEBUG", "handlers": ["console"]}}
+        >>> override = {"logging": {"level": "INFO", "handlers": ["file"]}}
+        >>> deep_merge(base, override)
+        {"logging": {"level": "INFO", "handlers": ["console", "file"]}}
+    """
+    if not isinstance(base, dict):
+        raise TypeError(f"base must be a dict, got {type(base).__name__}")
+    if not isinstance(override, dict):
+        raise TypeError(f"override must be a dict, got {type(override).__name__}")
+
+    result = base.copy()
+
+    for key, override_value in override.items():
+        if key in result:
+            base_value = result[key]
+            if isinstance(base_value, dict) and isinstance(override_value, dict):
+                result[key] = deep_merge(base_value, override_value)
+            elif isinstance(base_value, list) and isinstance(override_value, list):
+                result[key] = base_value + override_value
+            else:
+                result[key] = override_value
+        else:
+            result[key] = override_value
+
+    return result
 
 
 def time_import(package_name: str, repeat: int = 5, verbose: bool = True) -> dict:
