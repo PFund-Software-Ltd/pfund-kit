@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from abc import ABC, abstractmethod
 
 from pfund_kit.utils.yaml import load, dump
 from pfund_kit.style import cprint, TextStyle, RichColor
@@ -10,7 +11,7 @@ from pfund_kit.paths import ProjectPaths
 __all__ = ['Configuration']
 
 
-class Configuration:
+class Configuration(ABC):
     __version__ = "0.1"
     
     LOGGING_CONFIG_FILENAME = 'logging.yml'
@@ -78,6 +79,25 @@ class Configuration:
     @property
     def docker_compose_file_path(self):
         return self.config_path / self.DOCKER_COMPOSE_FILENAME
+    
+    @abstractmethod
+    def prepare_docker_context(self):
+        """Prepare the context before running docker compose.
+
+        Override this method in project-specific config to perform any setup
+        needed before running docker compose (e.g., setting environment variables,
+        ensuring directories exist, checking prerequisites).
+
+        Example:
+            def prepare_docker_context(self):
+                import os
+                # Set data paths for docker volumes
+                os.environ['MINIO_DATA_PATH'] = str(self.data_path / 'minio')
+                os.environ['TIMESCALEDB_DATA_PATH'] = str(self.data_path / 'timescaledb')
+                # Ensure volume directories exist
+                self.ensure_dirs(self.data_path / 'minio', self.data_path / 'timescaledb')
+        """
+        pass
     
     def ensure_dirs(self, *paths: Path):
         """Ensure directory paths exist."""
