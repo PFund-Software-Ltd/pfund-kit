@@ -75,15 +75,6 @@ def get_last_modified_time(file_path: Path | str, tz=datetime.timezone.utc) -> d
     # Convert to datetime object
     return datetime.datetime.fromtimestamp(last_modified_time, tz=tz)
 
-    
-def print_all_loggers(include_loggers_without_handlers: bool = False):
-    for name in sorted(logging.Logger.manager.loggerDict.keys()):
-        logger = logging.getLogger(name)
-        if logger.handlers:
-            print(f"  {name}: {logger.handlers}")
-        elif include_loggers_without_handlers:
-            print(f"  {name}: no handlers")
-
 
 def get_notebook_type() -> NotebookType | None:
     import importlib.util

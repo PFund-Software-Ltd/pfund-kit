@@ -12,6 +12,15 @@ import logging
 _REGISTERED_EXCEPTHOOK_LOGGERS: set[str] = set()
 
 
+def print_all_loggers(include_loggers_without_handlers: bool = False):
+    for name in sorted(logging.Logger.manager.loggerDict.keys()):
+        logger = logging.getLogger(name)
+        if logger.handlers:
+            print(f"  {name}: {logger.handlers}")
+        elif include_loggers_without_handlers:
+            print(f"  {name}: no handlers")
+
+
 def clear_logging_handlers(prefix: str = ''):
     '''Clears all handlers from all loggers.'''
     for logger_name in list(logging.Logger.manager.loggerDict):
@@ -71,6 +80,50 @@ def setup_exception_logging(logger_name: str | None = None):
     if not hasattr(sys, '_pfund_kit_excepthook_installed'):
         sys.excepthook = _custom_excepthook
         sys._pfund_kit_excepthook_installed = True
+
+
+def enable_debug_logging(logging_config: dict) -> dict:
+    '''
+    Enables debug logging by setting all loggers and handlers to DEBUG level.
+
+    This function modifies the logging configuration to set:
+    - All logger levels to DEBUG
+    - All handler levels to DEBUG
+
+    Args:
+        logging_config: The logging config dict to modify.
+
+    Returns:
+        New logging config dict with DEBUG levels enabled everywhere.
+
+    Example:
+        >>> config = {'loggers': {'myapp': {'level': 'INFO'}}, 'handlers': {'console': {'level': 'INFO'}}}
+        >>> debug_config = enable_debug_logging(config)
+        >>> debug_config['loggers']['myapp']['level']
+        'DEBUG'
+    '''
+    import copy
+    result = copy.deepcopy(logging_config)
+
+    # Set all logger levels to DEBUG
+    if 'loggers' in result:
+        for logger_config in result['loggers'].values():
+            if isinstance(logger_config, dict):
+                logger_config['level'] = 'DEBUG'
+
+    # Set all handler levels to DEBUG
+    if 'handlers' in result:
+        for handler_config in result['handlers'].values():
+            if isinstance(handler_config, dict):
+                handler_config['level'] = 'DEBUG'
+
+    # Set root logger level to DEBUG if it exists as a top-level key
+    # (Note: root logger can also be specified inside 'loggers' with key '' or 'root',
+    #  which would already be handled by the loop above)
+    if 'root' in result and isinstance(result['root'], dict):
+        result['root']['level'] = 'DEBUG'
+
+    return result
 
 
 def add_logger_prefix(logging_config: dict, prefix: str) -> dict:
