@@ -203,6 +203,9 @@ def reset(ctx, config_file, logging_file, docker_file):
     
     def _reset_file(filename):
         default_file = paths.package_path / filename
+        if not default_file.exists() and paths.project_root:
+            default_file = paths.project_root / filename
+        
         user_file = config.path / filename
         backup_file = config.path / f'{filename}.bak'
 
