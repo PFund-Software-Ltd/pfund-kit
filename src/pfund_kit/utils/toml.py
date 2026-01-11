@@ -43,28 +43,52 @@ def _prepare_for_toml(data: Any) -> Any:
         return data
 
 
+def _toml_to_python(data: Any) -> Any:
+    """
+    Recursively convert TOMLKit types to plain Python types.
+
+    Args:
+        data: TOMLKit object to convert
+
+    Returns:
+        Plain Python version of the data
+    """
+    if isinstance(data, dict):
+        return {k: _toml_to_python(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [_toml_to_python(item) for item in data]
+    else:
+        return data
+
+
 # =============================================================================
 # Convenience Functions
 # =============================================================================
 
-def load(file_path: str | Path) -> dict | None:
+def load(file_path: str | Path, to_python: bool = True) -> dict | None:
     """
     Load TOML file.
 
     Args:
         file_path: Path to TOML file (str or Path)
+        to_python: Convert TOMLDocument to plain Python dict (default: True)
 
     Returns:
-        - dict: Loaded TOML data
+        - dict: Loaded TOML data (plain Python dict if to_python=True)
         - None: If file doesn't exist
 
     Examples:
-        # Load from file path
+        # Load from file path (returns plain Python dict)
         data = load("config.toml")
         data = load(Path("config.toml"))
+        print(type(data))  # <class 'dict'>
 
         # Access nested values
         model_name = data['models']['devstral_small_2_24b']['providers']['ollama']['model_name']
+
+        # Keep as TOMLDocument (for advanced use cases)
+        toml_doc = load("config.toml", to_python=False)
+        print(type(toml_doc))  # <class 'tomlkit.toml_document.TOMLDocument'>
     """
     # Convert to Path and check existence
     path = Path(file_path)
@@ -73,7 +97,12 @@ def load(file_path: str | Path) -> dict | None:
 
     # Load file
     with open(path, 'r') as f:
-        return tomlkit.load(f)
+        data = tomlkit.load(f)
+
+    # Convert to plain Python types if requested
+    if to_python:
+        return _toml_to_python(data)
+    return data
 
 
 def dump(
