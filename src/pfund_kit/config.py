@@ -34,7 +34,7 @@ class Configuration(ABC):
             
         # fixed paths, since config_path cannot be changed
         self.config_path = self._paths.config_path
-        self.config_filename = f'{self._paths.project_name.lower()}_config.yml'
+        self.config_filename = f'{self._paths.project_name.lower()}.yml'
 
         # load config file
         data = load(self.file_path) or {}

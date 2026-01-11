@@ -97,7 +97,7 @@ class TestConfigurationInit:
 
         # Verify config file doesn't exist yet
         config_path = dirs['config'] / 'testproject' / 'config'
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
         assert not config_file.exists()
 
         # Create Configuration
@@ -162,7 +162,7 @@ class TestConfigurationInit:
         # Create existing config with custom paths
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         custom_data_path = dirs['data'] / 'custom_data'
         custom_log_path = dirs['log'] / 'custom_logs'
@@ -192,7 +192,7 @@ class TestConfigurationInit:
         # Create corrupted config (missing __version__)
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         # Use valid paths under tmp_path (not absolute paths outside test env)
         corrupted_config = {
@@ -215,14 +215,14 @@ class TestConfigurationInit:
         assert '__version__' in data
 
     def test_config_filename_format(self, mock_config_env):
-        """Test that config filename follows {project_name}_config.yml format."""
+        """Test that config filename follows {project_name}.yml format."""
         project_name = mock_config_env['project_name']
         source_file = mock_config_env['source_file']
 
         config = Configuration(project_name, source_file)
 
-        assert config.config_filename == 'testproject_config.yml'
-        assert config.file_path.name == 'testproject_config.yml'
+        assert config.config_filename == 'testproject.yml'
+        assert config.file_path.name == 'testproject.yml'
 
 
 class TestConfigurationMigration:
@@ -237,7 +237,7 @@ class TestConfigurationMigration:
         # Create config with old version
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         old_config = {
             '__version__': '0.0',  # Older than current
@@ -269,7 +269,7 @@ class TestConfigurationMigration:
         # Create config with old version and custom paths
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         custom_data_path = dirs['data'] / 'my_custom_data'
         custom_log_path = dirs['log'] / 'my_custom_logs'
@@ -305,7 +305,7 @@ class TestConfigurationMigration:
         # Create config with old version missing a field
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         # Simulate old config missing cache_path
         old_config = {
@@ -334,7 +334,7 @@ class TestConfigurationMigration:
         # Create config with old version and extra field
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         old_config = {
             '__version__': '0.0',
@@ -363,7 +363,7 @@ class TestConfigurationMigration:
         # Create config with future version
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         future_config = {
             '__version__': '99.0',  # Future version
@@ -387,7 +387,7 @@ class TestConfigurationMigration:
         # Create config with current version
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         current_config = {
             '__version__': Configuration.__version__,
@@ -436,7 +436,7 @@ class TestConfigurationPaths:
 
         config = Configuration(project_name, source_file)
 
-        assert config.file_path == config.config_path / 'testproject_config.yml'
+        assert config.file_path == config.config_path / 'testproject.yml'
 
     def test_filename_property(self, mock_config_env):
         """Test filename property returns config filename."""
@@ -445,7 +445,7 @@ class TestConfigurationPaths:
 
         config = Configuration(project_name, source_file)
 
-        assert config.filename == 'testproject_config.yml'
+        assert config.filename == 'testproject.yml'
 
     def test_logging_config_file_path_property(self, mock_config_env):
         """Test logging_config_file_path property."""
@@ -676,7 +676,7 @@ class TestConfigurationEdgeCases:
         # Create config with string paths (simulating YAML without !path tags)
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         # Write config with plain strings (no !path tags)
         config_content = f"""
@@ -722,7 +722,7 @@ cache_path: "{dirs['cache'] / 'string_path'}"
         # Create empty config file
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
         config_file.write_text("")
 
         # Create Configuration - should treat as missing
@@ -747,7 +747,7 @@ cache_path: "{dirs['cache'] / 'string_path'}"
         # Create config with only __version__
         config_path = dirs['config'] / 'testproject' / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / 'testproject_config.yml'
+        config_file = config_path / 'testproject.yml'
 
         minimal_config = {'__version__': Configuration.__version__}
         with open(config_file, 'w') as f:

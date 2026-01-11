@@ -175,7 +175,7 @@ class TestProjectPathsClass:
         assert paths.package_path == package_dir
         assert paths.log_path == mock_platformdirs['log'] / 'custom_name'
         assert paths.data_path == mock_platformdirs['data'] / 'custom_name'
-        assert paths.config_file_path.name == 'custom_name_config.yml'
+        assert paths.config_file_path.name == 'custom_name.yml'
     
     def test_flat_layout_auto_detect(self, tmp_path, mock_platformdirs):
         """Test ProjectPaths with flat-layout and auto-detection."""
@@ -233,7 +233,7 @@ class TestProjectPathsClass:
             assert paths.data_path == mock_platformdirs['data'] / 'unified'
             assert paths.cache_path == mock_platformdirs['cache'] / 'unified'
             assert paths.config_path == mock_platformdirs['config'] / 'unified' / 'config'
-            assert paths.config_file_path.name == 'unified_config.yml'
+            assert paths.config_file_path.name == 'unified.yml'
 
 
 class TestProjectPathsInheritance:
@@ -384,5 +384,5 @@ class TestDerivedPaths:
         
         # Derive config filename
         config_filename = paths.config_file_path.name
-        
-        assert config_filename == 'myapp_config.yml'
+
+        assert config_filename == 'myapp.yml'
