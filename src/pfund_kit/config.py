@@ -37,24 +37,24 @@ class Configuration(ABC):
         self.config_filename = f'{self._paths.project_name.lower()}.yml'
 
         # load config file
-        data = load(self.file_path) or {}
+        self._data = load(self.file_path) or {}
             
         # configurable paths
         default_data_path = self._paths.data_path
         default_log_path = self._paths.log_path
         default_cache_path = self._paths.cache_path
-        self.data_path = Path(data.get('data_path', default_data_path))
-        self.log_path = Path(data.get('log_path', default_log_path))
-        self.cache_path = Path(data.get('cache_path', default_cache_path))
+        self.data_path = Path(self._data.get('data_path', default_data_path))
+        self.log_path = Path(self._data.get('log_path', default_log_path))
+        self.cache_path = Path(self._data.get('cache_path', default_cache_path))
 
         # config file is corrupted or missing if __version__ is not present
-        if '__version__' not in data:
+        if '__version__' not in self._data:
             print(f"Config file {self.file_path} is corrupted or missing, resetting to default")
             self.save()
         else:
-            existing_version = data['__version__']
+            existing_version = self._data['__version__']
             if existing_version != self.__version__:
-                self._migrate(existing_data=data, existing_version=existing_version)
+                self._migrate(existing_data=self._data, existing_version=existing_version)
         
         self.ensure_dirs()
         self._initialize_default_files()
