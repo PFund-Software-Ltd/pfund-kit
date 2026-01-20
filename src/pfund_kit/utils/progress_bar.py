@@ -6,7 +6,9 @@ if TYPE_CHECKING:
     from typing import Iterable, Iterator
     from rich.progress import TaskID
 
+import logging
 import os
+import sys
 from rich.progress import (
     Progress,
     SpinnerColumn,
@@ -46,6 +48,8 @@ class ProgressBar:
         progress_style: str = (TextStyle.BOLD + RichColor.YELLOW).value,
         transient: bool = False,
         show_time: bool | str = False,
+        redirect_stdout: bool = False,
+        redirect_stderr: bool = True,
     ):
         """
         Create a progress bar.
@@ -63,6 +67,8 @@ class ProgressBar:
             show_time: Time display mode. False (default) = no time, 
                       'elapsed' = show elapsed time, 'remaining' = show time remaining,
                       True = show both elapsed and remaining.
+            redirect_stdout: If True, redirect stdout so prints won't break the progress bar.
+            redirect_stderr: If True, redirect stderr so logs won't break the progress bar.
         """
         from pfund_kit.utils import get_notebook_type
 
@@ -71,6 +77,12 @@ class ProgressBar:
         self._description = description
         self._transient = transient
         self._in_notebook = get_notebook_type() is not None
+        self._redirect_stdout = redirect_stdout
+        self._redirect_stderr = redirect_stderr
+        self._patched_handlers: list[tuple[logging.StreamHandler, object]] = []
+        if self._in_notebook:
+            redirect_stdout = False
+            redirect_stderr = False
 
         # If bar_finished_style is not specified, use the same as bar_style
         if bar_finished_style is None:
@@ -93,16 +105,26 @@ class ProgressBar:
             columns.append(TimeElapsedColumn())
             columns.append(TimeRemainingColumn())
 
-        self._progress = Progress(*columns, transient=transient, disable=_should_disable_progress())
+        self._progress = Progress(
+            *columns,
+            transient=transient,
+            disable=_should_disable_progress(),
+            redirect_stdout=redirect_stdout,
+            redirect_stderr=redirect_stderr,
+        )
         self._task_id: TaskID | None = None
     
     def __enter__(self) -> ProgressBar:
         self._progress.__enter__()
         self._task_id = self._progress.add_task(self._description, total=self._total)
+        self._patch_stream_handlers()
         return self
     
     def __exit__(self, *args) -> None:
-        self._progress.__exit__(*args)
+        try:
+            self._restore_stream_handlers()
+        finally:
+            self._progress.__exit__(*args)
     
     def __iter__(self) -> Iterator:
         if self._iterable is None:
@@ -130,6 +152,35 @@ class ProgressBar:
                 kwargs['refresh'] = True
             self._progress.update(self._task_id, **kwargs)
 
+    def _patch_stream_handlers(self) -> None:
+        if not (self._redirect_stdout or self._redirect_stderr):
+            return
+
+        def _iter_loggers() -> list[logging.Logger]:
+            loggers: list[logging.Logger] = [logging.getLogger()]
+            for logger in logging.Logger.manager.loggerDict.values():
+                if isinstance(logger, logging.Logger):
+                    loggers.append(logger)
+            return loggers
+
+        for logger in _iter_loggers():
+            for handler in logger.handlers:
+                if not isinstance(handler, logging.StreamHandler):
+                    continue
+                if handler.stream in (sys.__stderr__, sys.stderr) and self._redirect_stderr:
+                    self._patched_handlers.append((handler, handler.stream))
+                    handler.stream = sys.stderr
+                elif handler.stream in (sys.__stdout__, sys.stdout) and self._redirect_stdout:
+                    self._patched_handlers.append((handler, handler.stream))
+                    handler.stream = sys.stdout
+
+    def _restore_stream_handlers(self) -> None:
+        if not self._patched_handlers:
+            return
+        for handler, stream in self._patched_handlers:
+            handler.stream = stream
+        self._patched_handlers.clear()
+
 
 def track(
     iterable: Iterable,
@@ -143,6 +194,8 @@ def track(
     progress_style: str = (TextStyle.BOLD + RichColor.YELLOW).value,
     transient: bool = False,
     show_time: bool | str = False,
+    redirect_stdout: bool = False,
+    redirect_stderr: bool = True,
 ) -> Iterator:
     """
     Track progress over an iterable.
@@ -162,6 +215,8 @@ def track(
         show_time: Time display mode. False (default) = no time,
                   'elapsed' = show elapsed time, 'remaining' = show time remaining,
                   True = show both elapsed and remaining.
+        redirect_stdout: If True, redirect stdout so prints won't break the progress bar.
+        redirect_stderr: If True, redirect stderr so logs won't break the progress bar.
 
     Yields:
         Items from the iterable.
@@ -198,4 +253,6 @@ def track(
         progress_style=progress_style,
         transient=transient,
         show_time=show_time,
+        redirect_stdout=redirect_stdout,
+        redirect_stderr=redirect_stderr,
     )
