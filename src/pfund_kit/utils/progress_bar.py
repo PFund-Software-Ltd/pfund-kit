@@ -115,12 +115,28 @@ class ProgressBar:
         self._task_id: TaskID | None = None
     
     def __enter__(self) -> ProgressBar:
+        if self._in_notebook:
+            # In notebooks, use tqdm or simple percentage display
+            try:
+                from tqdm.auto import tqdm
+                self._tqdm_bar = tqdm(total=self._total, desc=self._description, disable=_should_disable_progress())
+                return self
+            except ImportError:
+                # Fallback: just track progress without display
+                self._tqdm_bar = None
+                return self
+
         self._progress.__enter__()
         self._task_id = self._progress.add_task(self._description, total=self._total)
         self._patch_stream_handlers()
         return self
     
     def __exit__(self, *args) -> None:
+        if self._in_notebook:
+            if hasattr(self, '_tqdm_bar') and self._tqdm_bar is not None:
+                self._tqdm_bar.close()
+            return
+
         try:
             self._restore_stream_handlers()
         finally:
@@ -137,19 +153,31 @@ class ProgressBar:
     
     def advance(self, amount: int = 1) -> None:
         """Advance the progress bar by the given amount."""
+        if self._in_notebook:
+            if hasattr(self, '_tqdm_bar') and self._tqdm_bar is not None:
+                self._tqdm_bar.update(amount)
+            return
+
         if self._task_id is not None:
-            self._progress.update(self._task_id, advance=amount, refresh=self._in_notebook)
+            self._progress.update(self._task_id, advance=amount)
     
     def update(self, *, description: str | None = None, total: int | None = None) -> None:
         """Update the progress bar's description or total."""
+        if self._in_notebook:
+            if hasattr(self, '_tqdm_bar') and self._tqdm_bar is not None:
+                if description is not None:
+                    self._tqdm_bar.set_description(description)
+                if total is not None:
+                    self._tqdm_bar.total = total
+                    self._tqdm_bar.refresh()
+            return
+
         if self._task_id is not None:
             kwargs = {}
             if description is not None:
                 kwargs['description'] = description
             if total is not None:
                 kwargs['total'] = total
-            if self._in_notebook:
-                kwargs['refresh'] = True
             self._progress.update(self._task_id, **kwargs)
 
     def _patch_stream_handlers(self) -> None:
