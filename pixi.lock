@@ -35,7 +35,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/uv-0.9.26-h76e24b7_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
-      - pypi: https://files.pythonhosted.org/packages/e3/73/3ac50183deaac6aaf5afd3d8bf631f965dee832e3029d2fdb5084249085c/afterpython-0.1.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/81/ed/65bfc5d65ba6ffb27684f62735c75cce4efa578095e708b9ac3304e1f9ac/afterpython-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/38/0e/27be9fdef66e72d64c0cdc3cc2823101b80585f8119b5c112c2e8f5f7dab/anyio-4.12.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/74/f5/9373290775639cb67a2fce7f629a1c240dce9f12fe927bc32b2736e16dfc/argcomplete-3.6.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e6/ad/3cc14f097111b4de0040c83a525973216457bbeeb63739ef1ed275c1c021/certifi-2026.1.4-py3-none-any.whl
@@ -106,7 +106,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/tk-8.6.13-hf689a15_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/uv-0.9.26-h39140fd_0.conda
-      - pypi: https://files.pythonhosted.org/packages/e3/73/3ac50183deaac6aaf5afd3d8bf631f965dee832e3029d2fdb5084249085c/afterpython-0.1.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/81/ed/65bfc5d65ba6ffb27684f62735c75cce4efa578095e708b9ac3304e1f9ac/afterpython-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/38/0e/27be9fdef66e72d64c0cdc3cc2823101b80585f8119b5c112c2e8f5f7dab/anyio-4.12.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/74/f5/9373290775639cb67a2fce7f629a1c240dce9f12fe927bc32b2736e16dfc/argcomplete-3.6.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e6/ad/3cc14f097111b4de0040c83a525973216457bbeeb63739ef1ed275c1c021/certifi-2026.1.4-py3-none-any.whl
@@ -176,7 +176,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h892fb3f_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/uv-0.9.26-hab132b7_0.conda
-      - pypi: https://files.pythonhosted.org/packages/e3/73/3ac50183deaac6aaf5afd3d8bf631f965dee832e3029d2fdb5084249085c/afterpython-0.1.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/81/ed/65bfc5d65ba6ffb27684f62735c75cce4efa578095e708b9ac3304e1f9ac/afterpython-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/38/0e/27be9fdef66e72d64c0cdc3cc2823101b80585f8119b5c112c2e8f5f7dab/anyio-4.12.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/74/f5/9373290775639cb67a2fce7f629a1c240dce9f12fe927bc32b2736e16dfc/argcomplete-3.6.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e6/ad/3cc14f097111b4de0040c83a525973216457bbeeb63739ef1ed275c1c021/certifi-2026.1.4-py3-none-any.whl
@@ -247,7 +247,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/vc-14.3-h41ae7f8_34.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.44.35208-h818238b_34.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vcomp14-14.44.35208-h818238b_34.conda
-      - pypi: https://files.pythonhosted.org/packages/e3/73/3ac50183deaac6aaf5afd3d8bf631f965dee832e3029d2fdb5084249085c/afterpython-0.1.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/81/ed/65bfc5d65ba6ffb27684f62735c75cce4efa578095e708b9ac3304e1f9ac/afterpython-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/38/0e/27be9fdef66e72d64c0cdc3cc2823101b80585f8119b5c112c2e8f5f7dab/anyio-4.12.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/74/f5/9373290775639cb67a2fce7f629a1c240dce9f12fe927bc32b2736e16dfc/argcomplete-3.6.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e6/ad/3cc14f097111b4de0040c83a525973216457bbeeb63739ef1ed275c1c021/certifi-2026.1.4-py3-none-any.whl
@@ -922,10 +922,10 @@ packages:
   purls: []
   size: 23621
   timestamp: 1650670423406
-- pypi: https://files.pythonhosted.org/packages/e3/73/3ac50183deaac6aaf5afd3d8bf631f965dee832e3029d2fdb5084249085c/afterpython-0.1.4-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/81/ed/65bfc5d65ba6ffb27684f62735c75cce4efa578095e708b9ac3304e1f9ac/afterpython-0.2.0-py3-none-any.whl
   name: afterpython
-  version: 0.1.4
-  sha256: f23c67b4187a21197c63f3614972d91bf8bfd29a115ae705fdc981e0c1a7f27f
+  version: 0.2.0
+  sha256: c5b66bf883e9ada17b548a3c352d696903c812149e1e30332acd0e991fb15ccb
   requires_dist:
   - click>=8.2.1
   - trogon>=0.6.0

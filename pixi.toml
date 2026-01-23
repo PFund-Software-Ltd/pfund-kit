@@ -40,7 +40,7 @@ py313 = ["py313", "test", "optional"]
 [feature.optional.pypi-dependencies]
 
 [feature.dev.pypi-dependencies]
-afterpython = ">=0.1.4"
+afterpython = ">=0.2.0"
 
 [feature.test.pypi-dependencies]
 pytest = ">=9.0.2"
