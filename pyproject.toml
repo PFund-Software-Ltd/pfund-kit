@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 dependencies = [
     "rich>=14.2.0",
     "tqdm>=4.67.1",
-    "click>=8.1.8",
+    "click>=8.2.1",
     "trogon>=0.6.0",
     "pyyaml>=6.0.3",
     "tomlkit>=0.13.3",
@@ -30,7 +30,7 @@ repository = "https://github.com/PFund-Software-Ltd/pfund-kit"
 # documentation = ""
 
 [build-system]
-requires = ["uv_build>=0.9.21,<0.10.0"]
+requires = ["uv_build>=0.9.26,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]

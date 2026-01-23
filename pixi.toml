@@ -4,7 +4,7 @@ channels = ["conda-forge"]
 name = "pfund-kit"
 platforms = ["osx-arm64", "linux-64", "win-64", "osx-64"]
 # updating this needs to also update the version in the ci.yml and templates/ci-workflow-template.yml files
-requires-pixi = ">=0.62.2"  # command: pixi workspace requires-pixi set ">=0.62.2"
+requires-pixi = ">=0.63.2"  # command: pixi workspace requires-pixi set ">=0.63.2"
 
 [tasks]
 
@@ -17,17 +17,17 @@ depends-on = [
 
 [dependencies]
 python = ">=3.11.14"
-uv = ">=0.9.21"
+uv = ">=0.9.26"
 
 [pypi-dependencies]
 pfund-kit = { path = ".", editable = true }
 rich = ">=14.2.0"
-click = ">=8.3.1"
+click = ">=8.2.1"
 trogon = ">=0.6.0"
 pyyaml = ">=6.0.3"
 tomlkit = ">=0.13.3"
 packaging = ">=25.0"
-platformdirs = ">=4.5.1"
+platformdirs = ">=4.2.2"
 python-dotenv = ">=1.2.1"
 prompt-toolkit = ">=3.0.51"
 
@@ -40,7 +40,7 @@ py313 = ["py313", "test", "optional"]
 [feature.optional.pypi-dependencies]
 
 [feature.dev.pypi-dependencies]
-
+afterpython = ">=0.1.4"
 
 [feature.test.pypi-dependencies]
 pytest = ">=9.0.2"
