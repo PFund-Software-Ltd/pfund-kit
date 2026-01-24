@@ -12,68 +12,51 @@ cprint = console.print
 
 
 __all__ = (
-    'rprint', 
-    'rpprint', 
+    'rprint',
+    'rpprint',
     'cprint',
     'console',
-    'RichColor', 
-    'TextStyle', 
+    'RichColor',
+    'TextStyle',
     'RichStyle',
 )
 
 
-class _CombinedStyle:
-    """Base class for combinable Rich styles."""
-    
-    def __init__(self, value: str):
-        self._value = value
-    
+class SpacedStrEnum(StrEnum):
+    """StrEnum that automatically adds spaces when concatenating."""
+
     def __add__(self, other):
-        """Combine styles: TextStyle.BOLD + RichColor.RED -> 'bold red'"""
-        if isinstance(other, (_CombinedStyle, RichColor, TextStyle)):
-            return _CombinedStyle(f"{self._value} {other._value if hasattr(other, '_value') else other.value}")
-        elif isinstance(other, str):
-            return _CombinedStyle(f"{self._value} {other}")
+        if isinstance(other, (StrEnum, str)):
+            return f"{self.value} {other}"
         return NotImplemented
-    
+
     def __radd__(self, other):
-        """Support reverse addition: RichColor.RED + TextStyle.BOLD"""
         if isinstance(other, str):
-            return _CombinedStyle(f"{other} {self._value}")
+            return f"{other} {self.value}"
         return NotImplemented
-    
-    def __str__(self):
-        return self._value
-    
-    def __repr__(self):
-        return f"_CombinedStyle('{self._value}')"
-    
-    @property
-    def value(self):
-        return self._value
 
 
-class TextStyle:
+class TextStyle(SpacedStrEnum):
     """Text style modifiers that can be combined with colors.
-    
+
     These can be combined using + operator:
         TextStyle.BOLD + RichColor.RED
         TextStyle.BOLD + TextStyle.UNDERLINE + RichColor.CYAN
     """
-    BOLD = _CombinedStyle("bold")
-    DIM = _CombinedStyle("dim")
-    ITALIC = _CombinedStyle("italic")
-    UNDERLINE = _CombinedStyle("underline")
-    UNDERLINE2 = _CombinedStyle("underline2")
-    BLINK = _CombinedStyle("blink")
-    BLINK2 = _CombinedStyle("blink2")
-    REVERSE = _CombinedStyle("reverse")
-    CONCEAL = _CombinedStyle("conceal")
-    STRIKE = _CombinedStyle("strike")
-    OVERLINE = _CombinedStyle("overline")
+    BOLD = "bold"
+    DIM = "dim"
+    ITALIC = "italic"
+    UNDERLINE = "underline"
+    UNDERLINE2 = "underline2"
+    BLINK = "blink"
+    BLINK2 = "blink2"
+    REVERSE = "reverse"
+    CONCEAL = "conceal"
+    STRIKE = "strike"
+    OVERLINE = "overline"
 
 
-class RichColor(StrEnum):
+class RichColor(SpacedStrEnum):
     """All available Rich named colors.
     
     Can be used directly or combined with TextStyle:
