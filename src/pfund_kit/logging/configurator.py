@@ -9,11 +9,12 @@ from logging.config import DictConfigurator
 from logging.handlers import TimedRotatingFileHandler
 
 from pfund_kit.logging.handlers import LazyHandler
+from pfund_kit.logging.loggers import ColoredLogger
 
 
 # override logging's DictConfigurator as it doesn't pass in logger names to file handlers to create filenames
 class LoggingDictConfigurator(DictConfigurator):
-    def __init__(self, log_path: Path, logging_config: dict, lazy: bool = False):
+    def __init__(self, log_path: Path, logging_config: dict, lazy: bool = False, use_colored_logger: bool = True):
         """
         Initialize the configurator.
 
@@ -22,10 +23,13 @@ class LoggingDictConfigurator(DictConfigurator):
             logging_config: Logging configuration dict
             lazy: If True, file handlers will be wrapped in LazyHandler to defer file creation
                   until the first log message is emitted
+            use_colored_logger: If True, use ColoredLogger as the default logger class,
+                  enabling the style parameter in log calls (e.g., logger.info("msg", style="bold green"))
         """
         self._log_path: Path = log_path
         self._logging_config: dict = logging_config
         self._lazy: bool = lazy
+        self._use_colored_logger: bool = use_colored_logger
 
         # copy config to avoid modifying the original config
         config = copy.deepcopy(logging_config)
@@ -103,3 +107,9 @@ class LoggingDictConfigurator(DictConfigurator):
             fh.addFilter(filter_obj)
 
         return fh
+
+    def configure(self):
+        """Configure logging with optional ColoredLogger support."""
+        if self._use_colored_logger:
+            logging.setLoggerClass(ColoredLogger)
+        super().configure()
