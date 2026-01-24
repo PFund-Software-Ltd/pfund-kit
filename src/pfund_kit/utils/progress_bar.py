@@ -15,6 +15,7 @@ from rich.progress import (
     TextColumn,
     BarColumn,
     TaskProgressColumn,
+    MofNCompleteColumn,
     TimeRemainingColumn,
     TimeElapsedColumn,
 )
@@ -94,6 +95,7 @@ class ProgressBar:
             TextColumn(f"[{text_style}]{{task.description}}"),
             BarColumn(complete_style=bar_style, finished_style=bar_finished_style),
             TaskProgressColumn(text_format=f"[{progress_style}]{{task.percentage:>3.0f}}%"),
+            MofNCompleteColumn(),
         ]
 
         # Add time columns based on show_time parameter
