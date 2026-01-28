@@ -17,7 +17,7 @@ depends-on = [
 
 [dependencies]
 python = ">=3.11.14"
-uv = ">=0.9.26"
+uv = ">=0.9.27"
 
 [pypi-dependencies]
 pfund-kit = { path = ".", editable = true }
