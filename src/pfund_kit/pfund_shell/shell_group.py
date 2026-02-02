@@ -24,8 +24,8 @@ class ShellCommandCollection(click.CommandCollection):
     as shell built-ins.
     """
 
-    # Command names to exclude from project groups (derived from SHARED_COMMANDS)
-    SHARED_COMMAND_NAMES = {cmd.name for cmd in SHARED_COMMANDS} | {'tui'}
+    # Command names (and their aliases) to exclude from project groups (derived from SHARED_COMMANDS)
+    SHARED_COMMAND_NAMES = {cmd.name for cmd in SHARED_COMMANDS} | {'tui', 'compose', 'rm'}
 
     def get_command(self, ctx, name):
         """Get a command by name, searching through all source groups."""
