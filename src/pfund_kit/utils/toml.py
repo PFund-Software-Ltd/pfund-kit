@@ -10,7 +10,7 @@ Provides simple read/write functions for TOML files with support for:
 from enum import StrEnum
 from pathlib import Path
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 import tomlkit
 
@@ -134,7 +134,7 @@ def dump(
     data: Any,
     file_path: str | Path,
     *,
-    append: bool = False,
+    mode: Literal["overwrite", "update", "merge"] = "overwrite",
     inline_keys: set[str] | list[str] | None = None,
     auto_inline: bool = False,
 ) -> None:
@@ -144,35 +144,27 @@ def dump(
     Args:
         data: Python dict to serialize (TOML only supports dicts at top level)
         file_path: Path to TOML file (str or Path)
-        append: If True, merge with existing data. If False, overwrite file (default)
+        mode: How to handle existing file data:
+            - "overwrite": Replace entire file with new data (default)
+            - "update": Replace only sections present in new data, preserve other sections
+            - "merge": Deep merge new data into existing (old keys within sections persist)
         inline_keys: Key names whose dict values should be rendered as inline tables.
             Example: inline_keys={'cancel_all_at'} turns nested dict into {start = false, stop = false}
         auto_inline: If True, automatically convert all nested dicts to inline tables.
             Only top-level sections remain as [section] headers; everything below is inlined.
 
     Examples:
-        # Dump to file path (overwrites)
-        data = {
-            'models': {
-                'devstral_small_2_24b': {
-                    'routing': ['ollama'],
-                    'providers': {
-                        'ollama': {
-                            'type': 'openai',
-                            'api_base': 'http://host.docker.internal:11434/v1',
-                            'model_name': 'devstral-small-2:24b',
-                            'api_key_location': 'none',
-                        }
-                    }
-                }
-            }
-        }
+        # Overwrite entire file (default)
         dump(data, "config.toml")
-        dump(data, Path("config.toml"))
+        dump(data, "config.toml", mode="overwrite")
 
-        # Append/merge with existing data
-        dump(data1, "config.toml")
-        dump(data2, "config.toml", append=True)  # Merges data2 into existing file
+        # Update specific sections, preserve others
+        # If file has [SANDBOX] and [OTHER], this replaces [SANDBOX] but keeps [OTHER]
+        dump({'SANDBOX': {'new_key': 1}}, "config.toml", mode="update")
+
+        # Deep merge into existing data (old keys persist)
+        # If [SANDBOX] has old_key=1, after merge it still has old_key=1 plus new keys
+        dump({'SANDBOX': {'new_key': 2}}, "config.toml", mode="merge")
 
         # Dump with specific inline tables
         data = {
@@ -190,19 +182,6 @@ def dump(
         # [SANDBOX]
         # df_min_rows = 1000
         # cancel_all_at = {start = false, stop = false}
-
-        # Dump with custom types
-        data = {
-            'paths': {
-                'data_dir': Path('/path/to/data'),
-                'output_dir': Path('/path/to/output'),
-            },
-            'settings': {
-                'threshold': Decimal('0.01'),
-                'max_value': Decimal('100.50'),
-            }
-        }
-        dump(data, "config.toml")
     """
     # Convert to Path and create parent directories
     path = Path(file_path)
@@ -211,17 +190,23 @@ def dump(
     # Normalize inline_keys to a set
     inline_set = set(inline_keys) if inline_keys else None
 
-    # Append mode: merge with existing data
-    if append and path.exists():
+    # Determine final data based on mode
+    if mode == "overwrite" or not path.exists():
+        # Overwrite mode or file doesn't exist: use new data as-is
+        final_data = data
+    elif mode == "update":
+        # Update mode: shallow merge at top level (replace sections, preserve others)
+        existing_data = load(file_path, to_python=True) or {}
+        final_data = {**existing_data, **data}
+    elif mode == "merge":
+        # Merge mode: deep merge (old keys within sections persist)
         from pfund_kit.utils import deep_merge
         existing_data = load(file_path, to_python=True) or {}
-        # Deep merge: recursively merge nested dicts (new data overwrites on key conflicts)
-        merged_data = deep_merge(existing_data, data)
-        prepared_data = _prepare_for_toml(merged_data, inline_set, auto_inline=auto_inline)
+        final_data = deep_merge(existing_data, data)
     else:
-        # Overwrite mode
-        prepared_data = _prepare_for_toml(data, inline_set, auto_inline=auto_inline)
+        raise ValueError(f"Invalid mode: {mode}. Must be 'overwrite', 'update', or 'merge'.")
 
-    # Write to file
+    # Prepare and write
+    prepared_data = _prepare_for_toml(final_data, inline_set, auto_inline=auto_inline)
     with open(path, 'w') as f:
         tomlkit.dump(prepared_data, f)
