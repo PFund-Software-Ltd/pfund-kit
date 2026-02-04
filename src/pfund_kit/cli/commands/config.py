@@ -165,13 +165,13 @@ def set_config(ctx, data_path, log_path, cache_path):
     # Update configuration and track changes
     updated = []
     if data_path:
-        config.data_path = data_path
+        config.data_path = Path(data_path)
         updated.append(f"data_path -> {data_path}")
     if log_path:
-        config.log_path = log_path
+        config.log_path = Path(log_path)
         updated.append(f"log_path -> {log_path}")
     if cache_path:
-        config.cache_path = cache_path
+        config.cache_path = Path(cache_path)
         updated.append(f"cache_path -> {cache_path}")
 
     config.save()
@@ -202,11 +202,7 @@ def reset(ctx, config_file, logging_file, docker_file):
     paths = config._paths
     project_name = paths.project_name
     
-    def _reset_file(filename):
-        default_file = paths.package_path / filename
-        if not default_file.exists() and paths.project_root:
-            default_file = paths.project_root / filename
-        
+    def _reset_file(filename, has_default_file=True):
         user_file = config.path / filename
         backup_file = config.path / f'{filename}.bak'
 
@@ -215,17 +211,23 @@ def reset(ctx, config_file, logging_file, docker_file):
             shutil.copy(user_file, backup_file)
             click.echo(f"  Backed up the existing file {user_file.name} to {backup_file.name}")
 
-        # Copy default file to user location
-        if default_file.exists():
-            shutil.copy(default_file, user_file)
-            click.echo(f"  Restored from default file {default_file.name}")
-        else:
-            click.echo(f"  Warning: Default file {default_file.name} not found, skipping", err=True)
+        if has_default_file:
+            default_file = paths.package_path / filename
+            if not default_file.exists() and paths.project_root:
+                default_file = paths.project_root / filename
+                
+            # Copy default file to user location
+            if default_file.exists():
+                shutil.copy(default_file, user_file)
+                click.echo(f"  Restored from default file {default_file.name}")
+            else:
+                click.echo(f"  Warning: Default file {default_file.name} not found, skipping", err=True)
 
     if config_file:
         filename = config.filename
         click.echo(f"Resetting {project_name}'s {filename}...")
-        _reset_file(filename)
+        _reset_file(filename, has_default_file=False)
+        config.save()
 
     if logging_file:
         filename = config.LOGGING_CONFIG_FILENAME
