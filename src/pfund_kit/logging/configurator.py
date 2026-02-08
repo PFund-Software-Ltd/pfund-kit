@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -16,12 +16,12 @@ from pfund_kit.logging.loggers import ColoredLogger
 class LoggingDictConfigurator(DictConfigurator):
     # class variables set via create() before instantiation
     log_path: Path | None = None
-    logging_config: dict | None = None
+    logging_config: dict[str, Any] | None = None
     lazy: bool = False
     use_colored_logger: bool = True
 
     @classmethod
-    def create(cls, log_path: Path, logging_config: dict, lazy: bool = False, use_colored_logger: bool = True) -> 'LoggingDictConfigurator':
+    def create(cls, log_path: Path, logging_config: dict[str, Any], lazy: bool = False, use_colored_logger: bool = True) -> LoggingDictConfigurator:
         """
         Factory method to create a configurator with proper class variable setup.
 
