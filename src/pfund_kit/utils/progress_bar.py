@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Iterable, Iterator
+    from collections.abc import Iterable, Iterator
     from rich.progress import TaskID
 
 import logging
@@ -38,7 +38,7 @@ class ProgressBar:
     
     def __init__(
         self,
-        iterable: Iterable | None = None,
+        iterable: Iterable[object] | None = None,
         total: int | None = None,
         description: str = "Processing",
         *,
@@ -144,7 +144,7 @@ class ProgressBar:
         finally:
             self._progress.__exit__(*args)
     
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[object]:
         if self._iterable is None:
             raise ValueError("No iterable provided to iterate over")
         
@@ -213,7 +213,7 @@ class ProgressBar:
 
 
 def track(
-    iterable: Iterable,
+    iterable: Iterable[object],
     description: str = "Processing",
     total: int | None = None,
     *,
@@ -226,7 +226,7 @@ def track(
     show_time: bool | str = False,
     redirect_stdout: bool = False,
     redirect_stderr: bool = True,
-) -> Iterator:
+) -> Iterator[object]:
     """
     Track progress over an iterable.
 
