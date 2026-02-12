@@ -81,9 +81,12 @@ def get_notebook_type() -> NotebookType | None:
     
     marimo_spec = importlib.util.find_spec("marimo")
     if marimo_spec is not None:
-        import marimo as mo
-        if mo.running_in_notebook():
-            return NotebookType.marimo
+        try:
+            import marimo as mo
+            if mo.running_in_notebook():
+                return NotebookType.marimo
+        except (ImportError, AttributeError):
+            pass
         
     if any(key.startswith(('JUPYTER_', 'JPY_')) for key in os.environ):
         return NotebookType.jupyter
