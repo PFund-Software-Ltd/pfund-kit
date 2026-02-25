@@ -17,7 +17,7 @@ depends-on = [
 
 [dependencies]
 python = ">=3.11.14"
-uv = ">=0.9.27"
+uv = ">=0.10.4"
 
 [pypi-dependencies]
 pfund-kit = { path = ".", editable = true }
@@ -40,7 +40,7 @@ py313 = ["py313", "test", "optional"]
 [feature.optional.pypi-dependencies]
 
 [feature.dev.pypi-dependencies]
-afterpython = ">=0.2.0"
+afterpython = ">=0.2.1"
 
 [feature.test.pypi-dependencies]
 pytest = ">=9.0.2"

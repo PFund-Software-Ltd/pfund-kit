@@ -21,6 +21,11 @@ dependencies = [
     "prompt-toolkit>=3.0.51",
 ]
 
+[dependency-groups]
+dev = [
+    "afterpython>=0.2.1",
+]
+
 [project.scripts]
 pfund-shell = "pfund_kit.pfund_shell.main:start_shell"
 
@@ -30,8 +35,13 @@ repository = "https://github.com/PFund-Software-Ltd/pfund-kit"
 # documentation = ""
 
 [build-system]
-requires = ["uv_build>=0.9.27,<0.10.0"]
+requires = ["uv_build>=0.10.4,<0.11.0"]
 build-backend = "uv_build"
+
+[tool.pyright]
+typeCheckingMode = "basic"
+# reportAny = false
+# reportExplicitAny = false
 
 [tool.uv.build-backend]
 module-name = "pfund_kit"
