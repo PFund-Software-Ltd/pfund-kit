@@ -39,7 +39,11 @@ def _prepare_for_toml(
     Returns:
         TOML-serializable version of the data
     """
-    if isinstance(data, Decimal):
+    # TOML has no null type, so Python None is stored as the string "None"
+    # and converted back to None on load (see _toml_to_python)
+    if data is None:
+        return "None"
+    elif isinstance(data, Decimal):
         return str(data)
     elif isinstance(data, Path):
         return str(data)
@@ -78,7 +82,10 @@ def _toml_to_python(data: Any) -> Any:
     Returns:
         Plain Python version of the data
     """
-    if isinstance(data, dict):
+    # Convert the string "None" back to Python None (see _prepare_for_toml)
+    if data == "None":
+        return None
+    elif isinstance(data, dict):
         return {k: _toml_to_python(v) for k, v in data.items()}
     elif isinstance(data, list):
         return [_toml_to_python(item) for item in data]
