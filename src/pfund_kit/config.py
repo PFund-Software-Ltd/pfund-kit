@@ -48,9 +48,9 @@ class Configuration(ABC):
         default_data_path = self._paths.data_path
         default_log_path = self._paths.log_path
         default_cache_path = self._paths.cache_path
-        self.data_path = Path(self._data.get('data_path', default_data_path))
-        self.log_path = Path(self._data.get('log_path', default_log_path))
-        self.cache_path = Path(self._data.get('cache_path', default_cache_path))
+        self._data_path = Path(self._data.get('data_path', default_data_path))
+        self._log_path = Path(self._data.get('log_path', default_log_path))
+        self._cache_path = Path(self._data.get('cache_path', default_cache_path))
 
         # config file is corrupted or missing if __version__ is not present
         if '__version__' not in self._data:
@@ -71,6 +71,30 @@ class Configuration(ABC):
     @property
     def file_path(self):
         return self.config_path / self.config_filename
+    
+    @property
+    def log_path(self):
+        return self._log_path
+    
+    @log_path.setter
+    def log_path(self, value: Path):
+        self._log_path = Path(value)
+    
+    @property
+    def data_path(self):
+        return self._data_path
+    
+    @data_path.setter
+    def data_path(self, value: Path):
+        self._data_path = Path(value)
+    
+    @property
+    def cache_path(self):
+        return self._cache_path
+    
+    @cache_path.setter
+    def cache_path(self, value: Path):
+        self._cache_path = Path(value)
     
     @property
     def filename(self):
@@ -163,9 +187,9 @@ class Configuration(ABC):
         """Convert config to dictionary."""
         return {
             '__version__': self.__version__,
-            'data_path': self.data_path,
-            'log_path': self.log_path,
-            'cache_path': self.cache_path,
+            'data_path': self._data_path,
+            'log_path': self._log_path,
+            'cache_path': self._cache_path,
         }
     
     def _migrate(self, existing_data: dict, existing_version: str):

@@ -12,7 +12,7 @@ dependencies = [
     "rich>=14.2.0",
     "tqdm>=4.67.1",
     "click>=8.2.1",
-    "trogon>=0.6.0",
+    "trogon>=0.6.0 ; sys_platform != 'emscripten'",
     "pyyaml>=6.0.3",
     "tomlkit>=0.13.3",
     "packaging>=25.0",

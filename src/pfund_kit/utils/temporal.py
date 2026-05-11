@@ -24,8 +24,8 @@ def get_utc_now() -> datetime.datetime:
     return datetime.datetime.now(tz=datetime.timezone.utc)
 
     
-def convert_ts_to_dt(ts: float):
-    return datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
+def convert_ts_to_dt(ts: float, tz: datetime.tzinfo = datetime.timezone.utc):
+    return datetime.datetime.fromtimestamp(ts, tz=tz)
 
 
 def get_local_timezone() -> datetime.tzinfo:

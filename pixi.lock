@@ -1920,12 +1920,12 @@ packages:
 - pypi: ./
   name: pfund-kit
   version: 0.1.4
-  sha256: 75362e53237df97918b46fe67fdcbd3f270182b3b2d351372666f26794b8b3f8
+  sha256: 4424889bf79f3f144db8fac2c198ca38c748fe953f08db36c2002719324d34f7
   requires_dist:
   - rich>=14.2.0
   - tqdm>=4.67.1
   - click>=8.2.1
-  - trogon>=0.6.0
+  - trogon>=0.6.0 ; sys_platform != 'emscripten'
   - pyyaml>=6.0.3
   - tomlkit>=0.13.3
   - packaging>=25.0
