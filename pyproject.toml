@@ -21,11 +21,6 @@ dependencies = [
     "prompt-toolkit>=3.0.51",
 ]
 
-[dependency-groups]
-dev = [
-    "afterpython>=0.2.1",
-]
-
 [project.scripts]
 pfund-shell = "pfund_kit.pfund_shell.main:start_shell"
 
