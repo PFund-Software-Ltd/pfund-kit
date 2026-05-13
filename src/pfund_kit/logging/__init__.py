@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 if TYPE_CHECKING:
     from types import TracebackType
+    from pfund_kit.config import Configuration
     LoggerName: TypeAlias = str
-    
+
 import sys
 import logging
 
@@ -124,6 +125,72 @@ def enable_debug_logging(logging_config: dict) -> dict:
         result['root']['level'] = 'DEBUG'
 
     return result
+
+
+def setup_logging(
+    config: Configuration,
+    env: str | None = None,
+    reset: bool = False,
+) -> None:
+    '''Configure logging for a project.
+
+    Args:
+        config: The project's Configuration instance.
+        env: Optional environment name used as a subdirectory of `config.log_path`.
+        reset: If True, clear existing logging handlers before reconfiguring.
+    '''
+    from pfund_kit.logging.configurator import LoggingDictConfigurator
+
+    if reset:
+        clear_logging_handlers()
+
+    log_path = config.log_path / env if env else config.log_path
+    log_path.mkdir(parents=True, exist_ok=True)
+
+    LoggingDictConfigurator.create(
+        log_path=log_path,
+        logging_config=get_logging_config(config),
+        lazy=True,
+        use_colored_logger=True,
+    ).configure()
+
+    setup_exception_logging(logger_name=config._paths.project_name)
+
+
+def configure_logging(
+    config: Configuration,
+    overrides: dict[str, Any] | None = None,
+    debug: bool = False,
+) -> dict[str, Any]:
+    '''Load the project's logging.yml and merge it with optional overrides.
+
+    Args:
+        config: The project's Configuration instance.
+        overrides: Dict merged on top of the loaded YAML.
+        debug: If True, force all loggers/handlers to DEBUG level.
+
+    Raises:
+        FileNotFoundError: If the project's logging config YAML is missing.
+    '''
+    from pfund_kit.utils import deep_merge
+    from pfund_kit.utils.yaml import load
+
+    base = load(config.logging_config_file_path)
+    if base is None:
+        raise FileNotFoundError(
+            f"Logging config file {config.logging_config_file_path} not found"
+        )
+    merged = deep_merge(base, overrides or {})
+    return enable_debug_logging(merged) if debug else merged
+
+
+def get_logging_config(config: Configuration) -> dict[str, Any]:
+    '''Return the merged logging config, caching it on the config instance.'''
+    cached = getattr(config, '_logging_config_cache', None)
+    if cached is None:
+        cached = configure_logging(config)
+        config._logging_config_cache = cached
+    return cached
 
 
 def add_logger_prefix(logging_config: dict, prefix: str) -> dict:
