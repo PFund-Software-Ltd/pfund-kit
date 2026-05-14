@@ -18,11 +18,12 @@ class Configuration(ABC):
     LOGGING_CONFIG_FILENAME = 'logging.yml'
     DOCKER_COMPOSE_FILENAME = 'compose.yml'
 
-    # List of files to copy on initialization
-    DEFAULT_FILES = [
-        LOGGING_CONFIG_FILENAME,
-        DOCKER_COMPOSE_FILENAME,
-    ]
+    # Files to copy on initialization, mapped to whether they are required.
+    # Subclasses can override to add/remove files (e.g. packages without compose.yml).
+    DEFAULT_FILES: dict[str, bool] = {
+        LOGGING_CONFIG_FILENAME: True,
+        DOCKER_COMPOSE_FILENAME: False,
+    }
    
     def __init__(self, project_name: str, source_file: str | None = None):
         '''
@@ -156,7 +157,7 @@ class Configuration(ABC):
         """
         import shutil
 
-        for filename in self.DEFAULT_FILES:
+        for filename, is_required in self.DEFAULT_FILES.items():
             dest = self.config_path / filename
             if dest.exists():
                 continue
@@ -169,11 +170,13 @@ class Configuration(ABC):
                 src = self._paths.project_root / filename
 
             if not src.exists():
-                raise FileNotFoundError(
-                    f"{filename} not found in package directory {self._paths.package_path}"
-                    + (f" or project root {self._paths.project_root}" if self._paths.project_root else "")
-                )
-            
+                if is_required:
+                    raise FileNotFoundError(
+                        f"{filename} not found in package directory {self._paths.package_path}"
+                        + (f" or project root {self._paths.project_root}" if self._paths.project_root else "")
+                    )
+                continue
+
             try:
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(src, dest)
