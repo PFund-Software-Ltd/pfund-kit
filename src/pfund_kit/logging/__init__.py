@@ -181,16 +181,17 @@ def configure_logging(
             f"Logging config file {config.logging_config_file_path} not found"
         )
     merged = deep_merge(base, overrides or {})
-    return enable_debug_logging(merged) if debug else merged
+    logging_config = enable_debug_logging(merged) if debug else merged
+    config._logging_config_cache = logging_config
+    return logging_config
 
 
 def get_logging_config(config: Configuration) -> dict[str, Any]:
     '''Return the merged logging config, caching it on the config instance.'''
-    cached = getattr(config, '_logging_config_cache', None)
-    if cached is None:
-        cached = configure_logging(config)
-        config._logging_config_cache = cached
-    return cached
+    logging_config = getattr(config, '_logging_config_cache', None)
+    if logging_config is None:
+        logging_config = configure_logging(config)
+    return logging_config
 
 
 def add_logger_prefix(logging_config: dict, prefix: str) -> dict:
