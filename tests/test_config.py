@@ -22,25 +22,21 @@ from pfund_kit.config import Configuration
 @pytest.fixture
 def mock_platformdirs(tmp_path, monkeypatch):
     """
-    Mock platformdirs functions to return paths under tmp_path.
-    This ensures tests are hermetic and don't pollute the real filesystem.
+    Redirect Path.home() to tmp_path so user paths land under ~/.{project_name}/.
+    Keeps tests hermetic (no pollution of the real ~).
+
+    NOTE: fixture name is legacy from when platformdirs was used. Existing tests
+    still index returned dict by 'log'/'data'/'cache'/'config' — for the new layout
+    these all sit under the same ~/.{project_name}/ root.
     """
-    mock_log_dir = tmp_path / "logs"
-    mock_data_dir = tmp_path / "data"
-    mock_cache_dir = tmp_path / "cache"
-    mock_config_dir = tmp_path / "config"
-
-    # Patch the functions in the paths module (where they're imported)
-    monkeypatch.setattr('pfund_kit.paths.user_log_dir', lambda: str(mock_log_dir))
-    monkeypatch.setattr('pfund_kit.paths.user_data_dir', lambda: str(mock_data_dir))
-    monkeypatch.setattr('pfund_kit.paths.user_cache_dir', lambda: str(mock_cache_dir))
-    monkeypatch.setattr('pfund_kit.paths.user_config_dir', lambda: str(mock_config_dir))
-
+    monkeypatch.setenv('HOME', str(tmp_path))
+    monkeypatch.setenv('USERPROFILE', str(tmp_path))  # Windows equivalent
     return {
-        'log': mock_log_dir,
-        'data': mock_data_dir,
-        'cache': mock_cache_dir,
-        'config': mock_config_dir,
+        'log': tmp_path,
+        'data': tmp_path,
+        'cache': tmp_path,
+        'config': tmp_path,
+        'home': tmp_path,
     }
 
 

@@ -2100,7 +2100,7 @@ packages:
 - pypi: ./
   name: pfund-kit
   version: 0.1.9
-  sha256: deba5178316cba6db4bccb7787201d39e2cba13fa5db5709157c584a07edd712
+  sha256: f1eecf7147365b54d2ea0d59fb13e82dd0a1b10e1142a81ca73b5b926fc4ebc6
   requires_dist:
   - rich>=14.2.0
   - tqdm>=4.67.1
@@ -2109,7 +2109,6 @@ packages:
   - pyyaml>=6.0.3
   - tomlkit>=0.13.3
   - packaging>=25.0
-  - platformdirs>=4.2.2
   - python-dotenv>=1.2.1
   - prompt-toolkit>=3.0.51
   requires_python: '>=3.11'

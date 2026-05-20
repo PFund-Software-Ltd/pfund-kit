@@ -89,7 +89,6 @@ source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "packaging" },
-    { name = "platformdirs" },
     { name = "prompt-toolkit" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
@@ -103,7 +102,6 @@ dependencies = [
 requires-dist = [
     { name = "click", specifier = ">=8.2.1" },
     { name = "packaging", specifier = ">=25.0" },
-    { name = "platformdirs", specifier = ">=4.2.2" },
     { name = "prompt-toolkit", specifier = ">=3.0.51" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "pyyaml", specifier = ">=6.0.3" },

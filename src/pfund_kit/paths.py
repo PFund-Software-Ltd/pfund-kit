@@ -2,7 +2,10 @@
 import inspect
 from pathlib import Path
 
-from platformdirs import user_log_dir, user_data_dir, user_config_dir, user_cache_dir
+# User dirs live under ~/.{project_name}/ — same convention as docker, aws, git, kube.
+# Intentionally not using platformdirs: macOS's ~/Library/Application Support is hostile
+# to terminal-first developer workflows.
+# from platformdirs import user_log_dir, user_data_dir, user_config_dir, user_cache_dir
 
 
 def _detect_project_layout(source_file: Path) -> tuple[str, Path, Path | None]:
@@ -39,7 +42,7 @@ def _detect_project_layout(source_file: Path) -> tuple[str, Path, Path | None]:
 
 class ProjectPaths:
     """Base class for managing project paths across pfund ecosystem."""
-    
+
     def __init__(self, project_name: str | None = None, source_file: str | None = None):
         """
         Initialize project paths.
@@ -63,7 +66,7 @@ class ProjectPaths:
 
         # Setup paths with detected package path and project root
         self._setup_paths(detected_package, detected_root)
-    
+
     def _setup_paths(self, package_path: Path, project_root: Path | None = None):
         """
         Setup all project paths. Can be overridden by subclasses.
@@ -78,11 +81,18 @@ class ProjectPaths:
         # Project root - where pyproject.toml lives (None for installed packages)
         self.project_root = project_root
 
-        # User paths (platform-specific user directories) - THE IMPORTANT ONES
-        self.log_path = Path(user_log_dir()) / self.project_name
-        self.data_path = Path(user_data_dir()) / self.project_name
-        self.cache_path = Path(user_cache_dir()) / self.project_name
-        self.config_path = Path(user_config_dir()) / self.project_name / 'config'
-        
+        # User paths — all under ~/.{project_name}/ regardless of OS.
+        user_root = Path.home() / f'.{self.project_name}'
+        self.user_root = user_root
+        self.log_path = user_root / 'logs'
+        self.data_path = user_root / 'data'
+        self.cache_path = user_root / 'cache'
+        self.config_path = user_root / 'config'
+        # DEPRECATED: previous platform-native layout (kept for reference).
+        # self.log_path = Path(user_log_dir()) / self.project_name
+        # self.data_path = Path(user_data_dir()) / self.project_name
+        # self.cache_path = Path(user_cache_dir()) / self.project_name
+        # self.config_path = Path(user_config_dir()) / self.project_name / 'config'
+
     def __repr__(self):
         return f"{self.__class__.__name__}(project_name='{self.project_name}')"
