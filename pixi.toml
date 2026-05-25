@@ -18,19 +18,19 @@ depends-on = [
 
 [dependencies]
 python = ">=3.11.14"
-uv = ">=0.10.4"
+uv = ">=0.11.6"
 
 [pypi-dependencies]
 pfund-kit = { path = ".", editable = true }
-rich = ">=14.2.0"
-click = ">=8.2.1"
+rich = ">=13.7.1"
+click = ">=8.1.7"
 trogon = ">=0.6.0"
-pyyaml = ">=6.0.3"
-tomlkit = ">=0.13.3"
-packaging = ">=25.0"
-# platformdirs = ">=4.2.2"
-python-dotenv = ">=1.2.1"
-prompt-toolkit = ">=3.0.51"
+pyyaml = ">=6.0.2"
+tomlkit = ">=0.15.0"
+packaging = ">=24.2"
+# platformdirs = ">=4.3.6"
+python-dotenv = ">=1.2.2"
+prompt-toolkit = ">=3.0.43"
 
 [environments]
 default = ["py311", "dev", "optional"]
@@ -41,7 +41,7 @@ py313 = ["py313", "test", "optional"]
 [feature.optional.pypi-dependencies]
 
 [feature.dev.pypi-dependencies]
-afterpython = ">=0.3.6"
+afterpython = ">=0.3.10"
 
 [feature.test.pypi-dependencies]
 pytest = ">=9.0.2"
