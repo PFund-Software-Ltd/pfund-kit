@@ -142,7 +142,9 @@ def setup_logging(
     from pfund_kit.logging.configurator import LoggingDictConfigurator
 
     if reset:
-        clear_logging_handlers()
+        # Only clear this project's own handlers, so re-running setup_logging
+        # doesn't wipe handlers configured by other packages (e.g. pfeed).
+        clear_logging_handlers(prefix=config._paths.project_name)
 
     log_path = config.log_path / env if env else config.log_path
     log_path.mkdir(parents=True, exist_ok=True)
