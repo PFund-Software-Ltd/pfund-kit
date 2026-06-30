@@ -17,12 +17,10 @@ depends-on = [
 ]
 
 [dependencies]
-python = ">=3.11.14"
-uv = ">=0.11.6"
 
 [pypi-dependencies]
-pfund-kit = { path = ".", editable = true }
 rich = ">=13.7.1"
+tqdm = ">=4.66.2"
 click = ">=8.1.7"
 trogon = ">=0.6.0"
 pyyaml = ">=6.0.2"
@@ -41,6 +39,7 @@ py313 = ["py313", "test", "optional"]
 [feature.optional.pypi-dependencies]
 
 [feature.dev.pypi-dependencies]
+pfund-kit = { path = ".", editable = true }
 afterpython = ">=0.3.16"
 
 [feature.test.pypi-dependencies]
