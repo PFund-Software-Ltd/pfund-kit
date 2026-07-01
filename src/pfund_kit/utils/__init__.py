@@ -17,7 +17,16 @@ __all__ = [
     'get_notebook_type',
     'deep_merge',
     'time_import',
+    'classproperty',
 ]
+
+
+class classproperty:
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, obj, owner):
+        return self.fget(owner)
 
 
 def load_env_file(env: str = '', verbose: bool = False) -> str | None:
