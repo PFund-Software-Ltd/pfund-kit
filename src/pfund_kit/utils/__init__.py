@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -21,11 +21,13 @@ __all__ = [
 ]
 
 
-class classproperty:
-    def __init__(self, fget):
-        self.fget = fget
+T = TypeVar("T")
 
-    def __get__(self, obj, owner):
+
+class classproperty(Generic[T]):
+    def __init__(self, fget: Callable[[Any], T]) -> None:
+        self.fget = fget
+    def __get__(self, obj: object, owner: type | None = None) -> T:
         return self.fget(owner)
 
 
