@@ -61,3 +61,28 @@ class ColoredLogger(logging.Logger):
         # Increment stacklevel by 1 to account for this wrapper frame,
         # so the correct caller location is reported instead of colored_logger.py
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel + 1)
+
+    # Public log methods are re-declared only so the `style` kwarg is part of
+    # their type signature (the stdlib stubs don't allow it). At runtime these
+    # just delegate to the stdlib implementations, which forward **kwargs to
+    # the overridden _log above.
+    def debug(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
+        super().debug(msg, *args, style=style, **kwargs)
+
+    def info(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
+        super().info(msg, *args, style=style, **kwargs)
+
+    def warning(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
+        super().warning(msg, *args, style=style, **kwargs)
+
+    def error(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
+        super().error(msg, *args, style=style, **kwargs)
+
+    def critical(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
+        super().critical(msg, *args, style=style, **kwargs)
+
+    def exception(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
+        super().exception(msg, *args, style=style, **kwargs)
+
+    def log(self, level: int, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
+        super().log(level, msg, *args, style=style, **kwargs)
