@@ -5,7 +5,7 @@ from typing import Callable, Any
 def get_function_signature(function: object, skip_self_and_cls: bool=True) -> inspect.Signature:
     """
     Returns the function signature.
-    
+
     If skip_self_and_cls is True, removes 'self' and 'cls' from the parameters.
     """
     signature = inspect.signature(function)
@@ -20,7 +20,7 @@ def get_function_signature(function: object, skip_self_and_cls: bool=True) -> in
 
 
 def get_function_args_and_kwargs(
-    function: Callable,
+    function: Callable[..., Any],
     skip_self_and_cls: bool=True,
 ) -> tuple[list[str], dict[str, Any], str | None, str | None]:
     """
