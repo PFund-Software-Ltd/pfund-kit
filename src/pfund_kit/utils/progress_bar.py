@@ -51,6 +51,7 @@ class ProgressBar:
         show_time: bool | str = False,
         redirect_stdout: bool = False,
         redirect_stderr: bool = True,
+        disable: bool = False,
     ):
         """
         Create a progress bar.
@@ -70,6 +71,8 @@ class ProgressBar:
                       True = show both elapsed and remaining.
             redirect_stdout: If True, redirect stdout so prints won't break the progress bar.
             redirect_stderr: If True, redirect stderr so logs won't break the progress bar.
+            disable: If True, disable this progress bar. The global
+                PFUND_DISABLE_PROGRESS_BAR setting always takes precedence.
         """
         from pfund_kit.utils import get_notebook_type
 
@@ -80,6 +83,7 @@ class ProgressBar:
         self._in_notebook = get_notebook_type() is not None
         self._redirect_stdout = redirect_stdout
         self._redirect_stderr = redirect_stderr
+        self._disable = disable or _should_disable_progress()
         self._patched_handlers: list[tuple[logging.StreamHandler, object]] = []
         if self._in_notebook:
             redirect_stdout = False
@@ -110,7 +114,7 @@ class ProgressBar:
         self._progress = Progress(
             *columns,
             transient=transient,
-            disable=_should_disable_progress(),
+            disable=self._disable,
             redirect_stdout=redirect_stdout,
             redirect_stderr=redirect_stderr,
         )
@@ -121,7 +125,11 @@ class ProgressBar:
             # In notebooks, use tqdm or simple percentage display
             try:
                 from tqdm.auto import tqdm
-                self._tqdm_bar = tqdm(total=self._total, desc=self._description, disable=_should_disable_progress())
+                self._tqdm_bar = tqdm(
+                    total=self._total,
+                    desc=self._description,
+                    disable=self._disable,
+                )
                 return self
             except ImportError:
                 # Fallback: just track progress without display
@@ -226,6 +234,7 @@ def track(
     show_time: bool | str = False,
     redirect_stdout: bool = False,
     redirect_stderr: bool = True,
+    disable: bool = False,
 ) -> Iterator[object]:
     """
     Track progress over an iterable.
@@ -247,6 +256,8 @@ def track(
                   True = show both elapsed and remaining.
         redirect_stdout: If True, redirect stdout so prints won't break the progress bar.
         redirect_stderr: If True, redirect stderr so logs won't break the progress bar.
+        disable: If True, disable this progress bar. The global
+            PFUND_DISABLE_PROGRESS_BAR setting always takes precedence.
 
     Yields:
         Items from the iterable.
@@ -285,4 +296,5 @@ def track(
         show_time=show_time,
         redirect_stdout=redirect_stdout,
         redirect_stderr=redirect_stderr,
+        disable=disable,
     )
