@@ -2,7 +2,7 @@
 """Custom logger that supports a style parameter for colored output."""
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 
 class ColoredLogger(logging.Logger):
@@ -63,26 +63,16 @@ class ColoredLogger(logging.Logger):
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel + 1)
 
     # Public log methods are re-declared only so the `style` kwarg is part of
-    # their type signature (the stdlib stubs don't allow it). At runtime these
-    # just delegate to the stdlib implementations, which forward **kwargs to
-    # the overridden _log above.
-    def debug(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
-        super().debug(msg, *args, style=style, **kwargs)
-
-    def info(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
-        super().info(msg, *args, style=style, **kwargs)
-
-    def warning(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
-        super().warning(msg, *args, style=style, **kwargs)
-
-    def error(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
-        super().error(msg, *args, style=style, **kwargs)
-
-    def critical(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
-        super().critical(msg, *args, style=style, **kwargs)
-
-    def exception(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
-        super().exception(msg, *args, style=style, **kwargs)
-
-    def log(self, level: int, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None:
-        super().log(level, msg, *args, style=style, **kwargs)
+    # their type signature (the stdlib stubs don't allow it). They must NOT
+    # exist at runtime: real wrapper methods would add an extra stack frame,
+    # making %(filename)s/%(funcName)s/%(lineno)d point at this file instead
+    # of the actual caller. The stdlib implementations already forward the
+    # `style` kwarg to the overridden _log above.
+    if TYPE_CHECKING:
+        def debug(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
+        def info(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
+        def warning(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
+        def error(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
+        def critical(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
+        def exception(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
+        def log(self, level: int, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
