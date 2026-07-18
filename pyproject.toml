@@ -1,6 +1,6 @@
 [project]
 name = "pfund-kit"
-version = "0.1.13"
+version = "0.1.14"
 description = "Configuration, CLI, and shared utilities for packages in pfund's ecosystem"
 license = "Apache-2.0"
 readme = "README.md"
