@@ -3,8 +3,13 @@ authors = ["softwareentrepreneer <softwareentrepreneer+pfund-kit@gmail.com>"]
 channels = ["conda-forge"]
 name = "pfund-kit"
 platforms = ["osx-arm64", "linux-64", "win-64", "osx-64"]
-# NOTE: this depends on the lock version used in setup-pixi in ci.yml
-requires-pixi = "<=0.72.2"  # command: pixi workspace requires-pixi set "<=0.72.2"
+# NOTE: the minimum supports relative exclude-newer; the maximum matches setup-pixi in ci.yml
+requires-pixi = ">=0.67.0,<=0.72.2"
+# FIXME: set it back to "14 days" when the package is stable
+exclude-newer = "0d"
+
+[pypi-exclude-newer]
+afterpython = "0d"
 
 [tasks]
 
@@ -19,7 +24,7 @@ depends-on = [
 
 [pypi-dependencies]
 rich = ">=13.7.1"
-tqdm = ">=4.69.0"
+tqdm = ">=4.69.1"
 click = ">=8.1.7"
 trogon = ">=0.6.0"
 pyyaml = ">=6.0.2"
@@ -39,7 +44,7 @@ py313 = ["py313", "test", "optional"]
 
 [feature.dev.pypi-dependencies]
 pfund-kit = { path = ".", editable = true }
-afterpython = ">=0.3.16"
+afterpython = ">=0.3.18"
 
 [feature.test.pypi-dependencies]
 pfund-kit = { path = ".", editable = true }

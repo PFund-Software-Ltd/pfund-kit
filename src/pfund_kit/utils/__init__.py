@@ -31,13 +31,20 @@ class classproperty(Generic[T]):
         return self.fget(owner)
 
 
-def load_env_file(env: str = '', verbose: bool = False) -> str | None:
+def load_env_file(env: str = '', verbose: bool = False, override: bool = False) -> str | None:
     """
     Load environment-specific .env file.
+
+    NOTE: real environment variables win over the .env file by default. Deployments
+    (docker, k8s, ray) set real env vars deliberately, while .env is a local dev
+    convenience - and find_dotenv() walks up parent directories, so a .env in an
+    ancestor dir would otherwise silently override a deployment's config.
 
     Args:
         env: Environment name (e.g., 'live', 'backtest'). Empty string loads '.env'.
         verbose: If True, print load status.
+        override: If True, values in the .env file take precedence over variables
+            already set in the environment.
 
     Returns:
         Path to loaded env file, or None if not found.
@@ -48,7 +55,7 @@ def load_env_file(env: str = '', verbose: bool = False) -> str | None:
     env_file_path = find_dotenv(filename=filename, usecwd=True, raise_error_if_not_found=False)
 
     if env_file_path:
-        load_dotenv(env_file_path, override=True)
+        load_dotenv(env_file_path, override=override)
         if verbose:
             print(f'Loaded {filename} from {env_file_path}')
         return env_file_path
