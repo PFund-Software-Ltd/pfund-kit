@@ -44,7 +44,7 @@ py313 = ["py313", "test", "optional"]
 
 [feature.dev.pypi-dependencies]
 pfund-kit = { path = ".", editable = true }
-afterpython = ">=0.3.18"
+afterpython = ">=0.3.19"
 
 [feature.test.pypi-dependencies]
 pfund-kit = { path = ".", editable = true }

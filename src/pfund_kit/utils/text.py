@@ -2,6 +2,11 @@ import re
 
 
 def to_camel_case(snake_case_str: str) -> str:
+    pascal_case_str = to_pascal_case(snake_case_str)
+    return pascal_case_str[:1].lower() + pascal_case_str[1:]
+
+
+def to_pascal_case(snake_case_str: str) -> str:
     return ''.join(word.capitalize() for word in snake_case_str.lower().split('_'))
 
 
