@@ -6,21 +6,16 @@ def to_camel_case(snake_case_str: str) -> str:
     return pascal_case_str[:1].lower() + pascal_case_str[1:]
 
 
-def to_pascal_case(snake_case_str: str) -> str:
-    return ''.join(word.capitalize() for word in snake_case_str.lower().split('_'))
+def to_pascal_case(s: str) -> str:
+    return ''.join(word.capitalize() for word in to_snake_case(s).split('_'))
 
 
 def to_snake_case(s: str) -> str:
-    """
-    Convert a CamelCase or PascalCase string to snake_case.
-    Example:
-        >>> to_snake_case("YahooFinance")
-        'yahoo_finance'
-    """
-    # Insert underscore before each uppercase letter (that’s not at the start),
-    # then lowercase the whole thing.
-    snake = re.sub(r'(?<!^)(?=[A-Z])', '_', s).lower()
-    return snake
+    """Convert a string from common naming conventions to snake_case."""
+    s = re.sub(r'[\s-]+', '_', s.strip())
+    s = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2', s)
+    s = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', s)
+    return re.sub(r'_+', '_', s).strip('_').lower()
 
 
 def to_uppercase(*args: str) -> tuple[str, ...]:
