@@ -77,7 +77,7 @@ def _write_existing_config(env: dict, payload: dict) -> Path:
     """Write a config YAML at the expected location and return its path."""
     config_dir = env['project_root'] / 'config'
     config_dir.mkdir(parents=True, exist_ok=True)
-    config_file = config_dir / f"{env['project_name']}.yml"
+    config_file = config_dir / "config.yml"
     with open(config_file, 'w') as f:
         yaml.dump(payload, f)
     return config_file
@@ -87,7 +87,7 @@ class TestConfigurationInit:
     """Test Configuration initialization scenarios."""
 
     def test_fresh_start_creates_config(self, env):
-        config_file = env['project_root'] / 'config' / f"{env['project_name']}.yml"
+        config_file = env['project_root'] / 'config' / "config.yml"
         assert not config_file.exists()
 
         config = _TestConfig(env['project_name'], env['source_file'])
@@ -151,99 +151,166 @@ class TestConfigurationInit:
     def test_config_filename_format(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
 
-        assert config.config_filename == 'testproject.yml'
-        assert config.file_path.name == 'testproject.yml'
+        assert config.config_filename == 'config.yml'
+        assert config.file_path.name == 'config.yml'
+
+
+def _rename_logs_dir(data: dict) -> dict:
+    """0.1.0 -> 0.2.0: `logs_dir` was renamed to `log_path`."""
+    data = dict(data)
+    if 'logs_dir' in data:
+        data['log_path'] = data.pop('logs_dir')
+    return data
+
+
+def _add_marker(data: dict) -> dict:
+    """0.2.0 -> 0.3.0: a subclass-owned field gains a default."""
+    return {**data, 'marker': data.get('marker', 'migrated')}
+
+
+class _MigratedConfig(_TestConfig):
+    """Config two schema versions ahead of a 0.1.0 file."""
+    __version__ = "0.3.0"
+    migrations = {
+        "0.1.0": ("0.2.0", _rename_logs_dir),
+        "0.2.0": ("0.3.0", _add_marker),
+    }
+
+    def _initialize_from_data(self):
+        self.marker = self._data.get('marker', 'fresh')
+
+    def to_dict(self) -> dict:
+        return {**super().to_dict(), 'marker': self.marker}
+
+
+def _backups(env: dict) -> list[Path]:
+    return sorted((env['project_root'] / 'config').glob('config.yml.*.bak'))
 
 
 class TestConfigurationMigration:
     """Test configuration migration between versions."""
 
-    def test_migration_triggers_on_version_mismatch(self, env, capsys):
-        _write_existing_config(env, {
-            '__version__': '0.0',
+    def _old_payload(self, env: dict, **extra) -> dict:
+        return {
+            '__version__': '0.1.0',
             'data_path': str(env['project_root'] / 'data'),
-            'log_path': str(env['project_root'] / 'logs'),
+            'logs_dir': str(env['project_root'] / 'logs'),
             'cache_path': str(env['project_root'] / 'cache'),
-        })
+            **extra,
+        }
 
-        config = _TestConfig(env['project_name'], env['source_file'])
+    def test_migration_chain_updates_file_and_keeps_backup(self, env, capsys):
+        config_file = _write_existing_config(env, self._old_payload(env))
+        original = config_file.read_bytes()
+
+        config = _MigratedConfig(env['project_name'], env['source_file'])
 
         captured = capsys.readouterr()
-        assert 'Migrating config from version 0.0' in captured.out
+        assert 'Migrating config from version 0.1.0 to 0.3.0' in captured.out
         with open(config.file_path) as f:
             data = yaml.safe_load(f)
-        assert data['__version__'] == _TestConfig.__version__
+        assert data['__version__'] == "0.3.0"
+        assert 'logs_dir' not in data
+        assert data['marker'] == 'migrated'
+        backups = _backups(env)
+        assert len(backups) == 1
+        assert backups[0].read_bytes() == original
 
-    def test_migration_preserves_user_paths(self, env):
-        custom_data_path = env['home'] / 'my_custom_data'
+    def test_migrated_values_are_read_by_subclass(self, env):
+        # The rename must be applied before attributes are read, otherwise the
+        # user's value falls back to the default and is then overwritten.
         custom_log_path = env['home'] / 'my_custom_logs'
-        _write_existing_config(env, {
-            '__version__': '0.0',
-            'data_path': str(custom_data_path),
-            'log_path': str(custom_log_path),
-            'cache_path': str(env['project_root'] / 'cache'),
-        })
+        _write_existing_config(env, self._old_payload(env, logs_dir=str(custom_log_path)))
 
-        config = _TestConfig(env['project_name'], env['source_file'])
+        config = _MigratedConfig(env['project_name'], env['source_file'])
 
-        assert config.data_path == custom_data_path
         assert config.log_path == custom_log_path
+        assert config.marker == 'migrated'
         with open(config.file_path) as f:
             data = yaml.safe_load(f)
-        assert str(custom_data_path) in str(data['data_path'])
+        assert str(custom_log_path) in str(data['log_path'])
 
-    def test_migration_identifies_new_fields(self, env, capsys):
-        # Old config missing cache_path.
+    def test_migration_from_intermediate_version(self, env):
         _write_existing_config(env, {
-            '__version__': '0.0',
-            'data_path': str(env['project_root'] / 'data'),
-            'log_path': str(env['project_root'] / 'logs'),
-        })
-
-        _TestConfig(env['project_name'], env['source_file'])
-
-        captured = capsys.readouterr()
-        assert 'Adding new fields' in captured.out
-        assert 'cache_path' in captured.out
-
-    def test_migration_identifies_removed_fields(self, env, capsys):
-        _write_existing_config(env, {
-            '__version__': '0.0',
+            '__version__': '0.2.0',
             'data_path': str(env['project_root'] / 'data'),
             'log_path': str(env['project_root'] / 'logs'),
             'cache_path': str(env['project_root'] / 'cache'),
-            'obsolete_field': 'should be removed',
+            'marker': 'kept',
         })
 
-        _TestConfig(env['project_name'], env['source_file'])
+        config = _MigratedConfig(env['project_name'], env['source_file'])
 
-        captured = capsys.readouterr()
-        assert 'Removing obsolete fields' in captured.out
-        assert 'obsolete_field' in captured.out
+        assert config.marker == 'kept'
+        with open(config.file_path) as f:
+            data = yaml.safe_load(f)
+        assert data['__version__'] == "0.3.0"
+
+    def test_missing_migration_raises_and_leaves_file(self, env):
+        config_file = _write_existing_config(env, {
+            '__version__': '0.0.1',
+            'data_path': str(env['project_root'] / 'data'),
+            'log_path': str(env['project_root'] / 'logs'),
+            'cache_path': str(env['project_root'] / 'cache'),
+        })
+        original = config_file.read_bytes()
+
+        with pytest.raises(ValueError, match="No configuration migration from 0.0.1"):
+            _MigratedConfig(env['project_name'], env['source_file'])
+
+        assert config_file.read_bytes() == original
+        assert not _backups(env)
 
     def test_migration_prevents_downgrade(self, env):
-        _write_existing_config(env, {
+        config_file = _write_existing_config(env, {
             '__version__': '99.0',
             'data_path': str(env['project_root'] / 'data'),
             'log_path': str(env['project_root'] / 'logs'),
             'cache_path': str(env['project_root'] / 'cache'),
         })
+        original = config_file.read_bytes()
 
-        with pytest.raises(AssertionError, match="Cannot migrate from version"):
+        with pytest.raises(ValueError, match="newer than supported"):
+            _TestConfig(env['project_name'], env['source_file'])
+
+        assert config_file.read_bytes() == original
+
+    def test_non_string_version_rejected(self, env):
+        _write_existing_config(env, {
+            '__version__': 1,
+            'data_path': str(env['project_root'] / 'data'),
+        })
+
+        with pytest.raises(ValueError, match="must be a version string"):
             _TestConfig(env['project_name'], env['source_file'])
 
     def test_no_migration_when_version_matches(self, env, capsys):
-        _write_existing_config(env, {
+        config_file = _write_existing_config(env, {
             '__version__': _TestConfig.__version__,
             'data_path': str(env['project_root'] / 'data'),
             'log_path': str(env['project_root'] / 'logs'),
             'cache_path': str(env['project_root'] / 'cache'),
         })
+        original = config_file.read_bytes()
 
         _TestConfig(env['project_name'], env['source_file'])
 
         captured = capsys.readouterr()
         assert 'Migrating' not in captured.out
+        assert config_file.read_bytes() == original
+        assert not _backups(env)
+
+    def test_corrupted_file_is_backed_up_before_reset(self, env):
+        config_file = _write_existing_config(env, {
+            'data_path': str(env['home'] / 'corrupted_data'),
+        })
+        original = config_file.read_bytes()
+
+        _TestConfig(env['project_name'], env['source_file'])
+
+        backups = _backups(env)
+        assert len(backups) == 1
+        assert backups[0].read_bytes() == original
 
 
 class TestConfigurationPaths:
@@ -259,11 +326,11 @@ class TestConfigurationPaths:
 
     def test_file_path_property(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
-        assert config.file_path == config.config_path / 'testproject.yml'
+        assert config.file_path == config.config_path / 'config.yml'
 
     def test_filename_property(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
-        assert config.filename == 'testproject.yml'
+        assert config.filename == 'config.yml'
 
     def test_logging_config_file_path_property(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
@@ -303,7 +370,7 @@ class TestConfigurationFileOps:
         config = _TestConfig(env['project_name'], env['source_file'])
         data = config.to_dict()
 
-        assert set(data.keys()) == {'__version__', 'data_path', 'log_path', 'cache_path'}
+        assert set(data.keys()) == {'data_path', 'log_path', 'cache_path'}
 
     def test_to_dict_returns_path_objects(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
@@ -334,9 +401,13 @@ class TestConfigurationFileOps:
 
         assert config2.data_path == custom_data_path
 
-    def test_to_dict_version_matches_class_version(self, env):
+    def test_save_writes_class_version(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
-        assert config.to_dict()['__version__'] == _TestConfig.__version__
+        config.save()
+        with open(config.file_path) as f:
+            data = yaml.safe_load(f)
+        assert data['__version__'] == _TestConfig.__version__
+        assert '__version__' not in config.to_dict()
 
 
 class TestConfigurationDefaultFiles:
@@ -380,7 +451,7 @@ class TestConfigurationEdgeCases:
     def test_path_string_converted_to_path(self, env):
         config_path = env['project_root'] / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / f"{env['project_name']}.yml"
+        config_file = config_path / "config.yml"
 
         config_content = (
             f"__version__: \"{_TestConfig.__version__}\"\n"
@@ -409,7 +480,7 @@ class TestConfigurationEdgeCases:
     def test_empty_config_file_treated_as_missing(self, env, capsys):
         config_path = env['project_root'] / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / f"{env['project_name']}.yml"
+        config_file = config_path / "config.yml"
         config_file.write_text("")
 
         config = _TestConfig(env['project_name'], env['source_file'])
@@ -420,6 +491,15 @@ class TestConfigurationEdgeCases:
         with open(config.file_path) as f:
             data = yaml.safe_load(f)
         assert '__version__' in data
+        assert not _backups(env)  # nothing worth keeping
+
+    def test_subclass_without_initialize_hook(self, env):
+        class Hookless(Configuration):
+            def prepare_docker_context(self):
+                pass
+
+        config = Hookless(env['project_name'], env['source_file'])
+        assert config.file_path.exists()
 
     def test_config_with_only_version(self, env):
         _write_existing_config(env, {'__version__': _TestConfig.__version__})
@@ -464,7 +544,6 @@ class TestConfigurationSubclassing:
 
         config = CustomConfiguration(env['project_name'], env['source_file'])
 
-        assert config.to_dict()['__version__'] == "1.0"
         with open(config.file_path) as f:
             data = yaml.safe_load(f)
         assert data['__version__'] == "1.0"

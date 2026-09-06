@@ -1,20 +1,35 @@
 from __future__ import annotations
 
+import copy
+import os
+import tempfile
 from pathlib import Path
+from typing import Any, ClassVar, Self
 from abc import ABC, abstractmethod
 
 from pfund_kit.utils.yaml import load, dump
 from pfund_kit.style import cprint, TextStyle, RichColor
 from pfund_kit.paths import ProjectPaths
-from packaging.version import Version
+from pfund_kit.migration import Migration, migrate
 
 
 __all__ = ['Configuration']
 
 
 class Configuration(ABC):
-    __version__ = "0.1.0"
-    
+    """Project config stored as a versioned YAML file.
+
+    Subclasses own their fields (via ``_initialize_from_data`` / ``to_dict``)
+    and their migrations, registered the same way as ``pfund_kit.settings``:
+    ``migrations = {"0.1.0": ("0.1.1", upgrade_to_011)}``. A migration receives
+    the stored fields without ``__version__`` and returns them in the shape
+    ``to_dict()`` produces. Migration runs before any field is read, and the
+    original file is kept as ``config.yml.<random>.bak`` before it is rewritten.
+    """
+
+    __version__: ClassVar[str] = "0.1.0"
+    migrations: ClassVar[dict[str, tuple[str, Migration]]] = {}
+
     LOGGING_CONFIG_FILENAME = 'logging.yml'
     DOCKER_COMPOSE_FILENAME = 'compose.yml'
 
@@ -24,25 +39,43 @@ class Configuration(ABC):
         LOGGING_CONFIG_FILENAME: True,
         DOCKER_COMPOSE_FILENAME: False,
     }
-   
+
     def __init__(self, project_name: str, source_file: str | None = None):
         '''
         Args:
             project_name: Name of the project.
-            source_file: Path to a source file for determining project layout. 
+            source_file: Path to a source file for determining project layout.
                         If None, auto-detects from the caller's __file__.
         '''
         self._paths = ProjectPaths(project_name, source_file)
-            
+
         # fixed paths, since config_path cannot be changed
         self.config_path = self._paths.config_path
-        self.config_filename = f'{self._paths.project_name.lower()}.yml'
+        self.config_filename = 'config.yml'
 
-        # load config file
-        self._data = load(self.file_path) or {}
+        # load config file, upgrading an older schema before any field is read
+        original = self.file_path.read_bytes() if self.file_path.exists() else None
+        stored = load(self.file_path) or {}
+        if not isinstance(stored, dict):
+            stored = {}
+        stored_version = stored.get('__version__')
+        # config file is corrupted or missing if __version__ is not present
+        if stored_version is None:
+            print(f"Config file {self.file_path} is corrupted or missing, resetting to default")
+            self._data: dict[str, Any] = {}
+            needs_save = True
+        else:
+            needs_save = stored_version != self.__version__
+            if needs_save:
+                cprint(
+                    f"Migrating config from version {stored_version} to {self.__version__}",
+                    style=TextStyle.BOLD + RichColor.RED,
+                )
+            self._data = migrate(
+                stored, target=self.__version__, migrations=self.migrations, name="Configuration"
+            )
 
         # Allow subclasses to initialize their attributes from _data
-        # before _migrate() is called (which uses to_dict())
         self._initialize_from_data()
 
         # configurable paths
@@ -53,63 +86,77 @@ class Configuration(ABC):
         self._log_path = Path(self._data.get('log_path', default_log_path))
         self._cache_path = Path(self._data.get('cache_path', default_cache_path))
 
-        # config file is corrupted or missing if __version__ is not present
-        if '__version__' not in self._data:
-            print(f"Config file {self.file_path} is corrupted or missing, resetting to default")
+        if needs_save:
+            if original:
+                self._backup(original)
             self.save()
-        else:
-            existing_version = self._data['__version__']
-            if existing_version != self.__version__:
-                self._migrate(existing_data=self._data, existing_version=existing_version)
-        
+
         self.ensure_dirs()
         self._initialize_default_files()
-    
+
+    def scoped(self, *parts: str) -> Self:
+        """A copy with data/log/cache nested under `parts`.
+
+        For projects that partition their storage by a sub-identity: pfund by
+        engine name, alphafund by fund. A copy rather than an in-place
+        narrowing, since a config is typically a process-wide singleton --
+        mutating it would nest a second scope inside the first (`logs/a/b`) and
+        leak the change to every other holder.
+
+        `config_path` is deliberately not scoped; it is fixed, so a project
+        needing a scoped config file builds that path itself.
+        """
+        scoped = copy.deepcopy(self)
+        scoped.data_path = self._data_path.joinpath(*parts)
+        scoped.log_path = self._log_path.joinpath(*parts)
+        scoped.cache_path = self._cache_path.joinpath(*parts)
+        return scoped
+
     @property
     def path(self):
         return self.config_path
-    
+
     @property
     def file_path(self):
         return self.config_path / self.config_filename
-    
+
     @property
     def log_path(self):
         return self._log_path
-    
+
     @log_path.setter
     def log_path(self, value: Path):
         self._log_path = Path(value)
-    
+
     @property
     def data_path(self):
         return self._data_path
-    
+
     @data_path.setter
     def data_path(self, value: Path):
         self._data_path = Path(value)
-    
+
     @property
     def cache_path(self):
         return self._cache_path
-    
+
     @cache_path.setter
     def cache_path(self, value: Path):
         self._cache_path = Path(value)
-    
+
     @property
     def filename(self):
         '''Filename of the config file.'''
         return self.config_filename
-    
+
     @property
     def logging_config_file_path(self):
         return self.config_path / self.LOGGING_CONFIG_FILENAME
-    
+
     @property
     def docker_compose_file_path(self):
         return self.config_path / self.DOCKER_COMPOSE_FILENAME
-    
+
     @abstractmethod
     def prepare_docker_context(self):
         """Prepare the context before running docker compose.
@@ -128,12 +175,11 @@ class Configuration(ABC):
                 self.ensure_dirs(self.data_path / 'minio', self.data_path / 'timescaledb')
         """
         pass
-    
-    @abstractmethod
+
     def _initialize_from_data(self):
         """Hook for subclasses to initialize attributes from self._data.
 
-        Called after self._data is loaded but before _migrate() runs.
+        Called after self._data is loaded and migrated to the current version.
         Override this in subclasses that have additional attributes
         used by to_dict().
         """
@@ -147,7 +193,7 @@ class Configuration(ABC):
             if not isinstance(path, Path):
                 raise TypeError(f"Path {path} is not a Path object")
             path.mkdir(parents=True, exist_ok=True)
-    
+
     def _initialize_default_files(self):
         """Copy default config files from package to user config directory.
 
@@ -183,39 +229,28 @@ class Configuration(ABC):
                 print(f"Copied {filename} to {self.config_path}")
             except Exception as e:
                 raise RuntimeError(f"Error copying {filename}: {e}")
-    
-    # NOTE: this is the Single Source of Truth for config data
-    # it defines what fields exist in the config file
+
+    # NOTE: this is the Single Source of Truth for config fields
+    # it defines what fields exist in the config file; save() adds __version__
     def to_dict(self) -> dict:
-        """Convert config to dictionary."""
+        """Convert config fields to dictionary, without ``__version__``."""
         return {
-            '__version__': self.__version__,
             'data_path': self._data_path,
             'log_path': self._log_path,
             'cache_path': self._cache_path,
         }
-    
-    def _migrate(self, existing_data: dict, existing_version: str):
-        """Migrate config from old version to current version."""
-        from_version = existing_version
-        to_version = self.__version__
-        assert Version(to_version) > Version(from_version), f"Cannot migrate from version {from_version} to {to_version}"
-        cprint(f"Migrating config from version {from_version} to {to_version}", style=TextStyle.BOLD + RichColor.RED)
-        
-        # expected schema, what config data should be based on __version__
-        expected_data = self.to_dict()
-        
-        # Find differences between expected schema and existing config in user's config file
-        expected_keys = set(expected_data.keys())
-        existing_keys = set(existing_data.keys())
-        if new_keys := expected_keys - existing_keys:
-            print(f"  Adding new fields: {new_keys}")
-        if removed_keys := existing_keys - expected_keys:
-            print(f"  Removing obsolete fields: {removed_keys}")
-        
-        self.save()
-    
+
+    def _backup(self, original: bytes) -> Path:
+        """Keep the original file beside the config before it is rewritten."""
+        with tempfile.NamedTemporaryFile(
+            dir=self.config_path, prefix=f"{self.config_filename}.", suffix=".bak", delete=False
+        ) as stream:
+            stream.write(original)
+            stream.flush()
+            os.fsync(stream.fileno())
+        return Path(stream.name)
+
     def save(self):
         """Save config to file."""
-        data = self.to_dict()
+        data = {'__version__': self.__version__, **self.to_dict()}
         dump(data, self.file_path)

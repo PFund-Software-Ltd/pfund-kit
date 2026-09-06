@@ -3,8 +3,8 @@ authors = ["softwareentrepreneer <softwareentrepreneer+pfund-kit@gmail.com>"]
 channels = ["conda-forge"]
 name = "pfund-kit"
 platforms = ["osx-arm64", "linux-64", "win-64", "osx-64"]
-# NOTE: the minimum supports relative exclude-newer; the maximum matches setup-pixi in ci.yml
-requires-pixi = ">=0.67.0,<=0.72.2"
+# NOTE: should match with setup-pixi in ci.yml
+requires-pixi = ">=0.78.0,<0.79.0"
 # FIXME: set it back to "14 days" when the package is stable
 exclude-newer = "0d"
 
@@ -30,6 +30,7 @@ trogon = ">=0.6.0"
 pyyaml = ">=6.0.2"
 tomlkit = ">=0.15.0"
 packaging = ">=24.2"
+pydantic = ">=2.0"
 # platformdirs = ">=4.3.6"
 python-dotenv = ">=1.2.2"
 prompt-toolkit = ">=3.0.43"
