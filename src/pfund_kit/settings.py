@@ -27,6 +27,9 @@ class Settings(BaseModel):
 
     __version__: ClassVar[str] = "0.1.0"
     migrations: ClassVar[dict[str, tuple[str, Migration]]] = {}
+    # Keys whose dict values are written as inline tables. None inlines every
+    # dict nested deeper than one level.
+    inline_keys: ClassVar[frozenset[str] | None] = None
     model_config = ConfigDict(extra="forbid")
 
     @classmethod
@@ -89,7 +92,10 @@ class Settings(BaseModel):
         cls, path: Path, data: dict[str, Any], original: bytes | None, *, backup: bool
     ) -> None:
         payload = {"__version__": cls.__version__, **data}
-        prepared = toml._prepare_for_toml(payload, auto_inline=True)
+        if cls.inline_keys is None:
+            prepared = toml._prepare_for_toml(payload, auto_inline=True)
+        else:
+            prepared = toml._prepare_for_toml(payload, inline_keys=set(cls.inline_keys))
         document = tomlkit.parse(original.decode("utf-8")) if original is not None else tomlkit.document()
         for key in list(document):
             if key not in payload:
