@@ -203,7 +203,8 @@ class ProgressBar:
 
         for logger in _iter_loggers():
             for handler in logger.handlers:
-                if not isinstance(handler, logging.StreamHandler):
+                # torch attaches _StderrHandler instances to its loggers; their stream is read-only.
+                if not isinstance(handler, logging.StreamHandler) or isinstance(handler, logging._StderrHandler):
                     continue
                 if handler.stream in (sys.__stderr__, sys.stderr) and self._redirect_stderr:
                     self._patched_handlers.append((handler, handler.stream))
