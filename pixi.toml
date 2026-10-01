@@ -4,7 +4,7 @@ channels = ["conda-forge"]
 name = "pfund-kit"
 platforms = ["osx-arm64", "linux-64", "win-64", "osx-64"]
 # NOTE: should match with setup-pixi in ci.yml
-requires-pixi = ">=0.78.0,<0.79.0"
+requires-pixi = ">=0.81.0,<0.82.0"
 # FIXME: set it back to "14 days" when the package is stable
 exclude-newer = "0d"
 
@@ -15,52 +15,57 @@ afterpython = "0d"
 
 [tasks.test-all]
 depends-on = [
-  { task = "test", environment = "py311" },
   { task = "test", environment = "py312" },
   { task = "test", environment = "py313" },
+  { task = "test", environment = "py314" },
+  # { task = "test", environment = "py315" },
 ]
 
 [dependencies]
 
 [pypi-dependencies]
-rich = ">=13.7.1"
-tqdm = ">=4.69.1"
-click = ">=8.1.7"
+rich = ">=15.0.0"
+tqdm = ">=4.70.1"
+click = ">=8.5.0"
 trogon = ">=0.6.0"
-pyyaml = ">=6.0.2"
-tomlkit = ">=0.15.0"
-packaging = ">=24.2"
-pydantic = ">=2.0"
+pyyaml = ">=6.0.3"
+tomlkit = ">=0.15.1"
+packaging = ">=26.3"
+pydantic = ">=2.13.5"
 # platformdirs = ">=4.3.6"
-python-dotenv = ">=1.2.2"
-prompt-toolkit = ">=3.0.43"
+python-dotenv = ">=1.2.3"
+prompt-toolkit = ">=3.0.53"
 
 [environments]
-default = ["py311", "dev", "optional"]
-py311 = ["py311", "test", "optional"]
+default = ["py312", "dev", "test", "optional"]
 py312 = ["py312", "test", "optional"]
 py313 = ["py313", "test", "optional"]
+py314 = ["py314", "test", "optional"]
+# py315 = ["py315", "test", "optional"]
 
 [feature.optional.pypi-dependencies]
 
 [feature.dev.pypi-dependencies]
 pfund-kit = { path = ".", editable = true }
-afterpython = ">=0.3.19"
+afterpython = ">=0.4.0"
 
 [feature.test.pypi-dependencies]
 pfund-kit = { path = ".", editable = true }
-pytest = ">=9.0.2"
-pytest-cov = ">=7.0.0"
-pytest-mock = ">=3.15.1"
+pytest = ">=9.1.1"
+pytest-cov = ">=7.1.0"
+pytest-mock = ">=3.16.0"
 pytest-xdist = ">=3.8.0"
 [feature.test.tasks]
 test = "pytest -n auto"
-
-[feature.py311.dependencies]
-python = "3.11.*"
 
 [feature.py312.dependencies]
 python = "3.12.*"
 
 [feature.py313.dependencies]
 python = "3.13.*"
+
+[feature.py314.dependencies]
+python = "3.14.*"
+
+# [feature.py315.dependencies]
+# python = "3.15.*"
