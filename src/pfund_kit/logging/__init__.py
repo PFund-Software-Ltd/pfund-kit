@@ -131,6 +131,7 @@ def setup_logging(
     config: Configuration,
     env: str | None = None,
     reset: bool = False,
+    logging_config: dict[str, Any] | None = None,
 ) -> None:
     '''Configure logging for a project.
 
@@ -138,6 +139,7 @@ def setup_logging(
         config: The project's Configuration instance.
         env: Optional environment name used as a subdirectory of `config.log_path`.
         reset: If True, clear existing logging handlers before reconfiguring.
+        logging_config: The logging config to apply. If None, uses `get_logging_config(config)`.
     '''
     from pfund_kit.logging.configurator import LoggingDictConfigurator
 
@@ -151,7 +153,7 @@ def setup_logging(
 
     LoggingDictConfigurator.create(
         log_path=log_path,
-        logging_config=get_logging_config(config),
+        logging_config=logging_config if logging_config is not None else get_logging_config(config),
         lazy=True,
         use_colored_logger=True,
     ).configure()
