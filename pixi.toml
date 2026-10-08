@@ -15,7 +15,6 @@ afterpython = "0d"
 
 [tasks.test-all]
 depends-on = [
-  { task = "test", environment = "py312" },
   { task = "test", environment = "py313" },
   { task = "test", environment = "py314" },
   # { task = "test", environment = "py315" },
@@ -37,8 +36,7 @@ python-dotenv = ">=1.2.3"
 prompt-toolkit = ">=3.0.53"
 
 [environments]
-default = ["py312", "dev", "test", "optional"]
-py312 = ["py312", "test", "optional"]
+default = ["py313", "dev", "test", "optional"]
 py313 = ["py313", "test", "optional"]
 py314 = ["py314", "test", "optional"]
 # py315 = ["py315", "test", "optional"]
@@ -57,9 +55,6 @@ pytest-mock = ">=3.16.0"
 pytest-xdist = ">=3.8.0"
 [feature.test.tasks]
 test = "pytest -n auto"
-
-[feature.py312.dependencies]
-python = "3.12.*"
 
 [feature.py313.dependencies]
 python = "3.13.*"
