@@ -27,7 +27,7 @@ def _should_disable_progress() -> bool:
     return os.getenv('PFUND_DISABLE_PROGRESS_BAR', '').lower() in ('1', 'true', 'yes')
 
 
-class ProgressBar:
+class ProgressBar[T]:
     """A simple wrapper around rich.progress.Progress for easy usage.
 
     Note:
@@ -38,7 +38,7 @@ class ProgressBar:
     
     def __init__(
         self,
-        iterable: Iterable[object] | None = None,
+        iterable: Iterable[T] | None = None,
         total: int | None = None,
         description: str = "Processing",
         *,
@@ -152,7 +152,7 @@ class ProgressBar:
         finally:
             self._progress.__exit__(*args)
     
-    def __iter__(self) -> Iterator[object]:
+    def __iter__(self) -> Iterator[T]:
         if self._iterable is None:
             raise ValueError("No iterable provided to iterate over")
         
@@ -221,8 +221,8 @@ class ProgressBar:
         self._patched_handlers.clear()
 
 
-def track(
-    iterable: Iterable[object],
+def track[T](
+    iterable: Iterable[T],
     description: str = "Processing",
     total: int | None = None,
     *,
@@ -236,7 +236,7 @@ def track(
     redirect_stdout: bool = False,
     redirect_stderr: bool = True,
     disable: bool = False,
-) -> Iterator[object]:
+) -> Iterator[T]:
     """
     Track progress over an iterable.
 
