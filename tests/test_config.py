@@ -43,10 +43,10 @@ def temp_package(tmp_path):
     package_dir = tmp_path / "src" / "test_pkg"
     package_dir.mkdir(parents=True)
 
-    logging_yml = package_dir / "logging.yml"
+    logging_yml = package_dir / "logging.yaml"
     logging_yml.write_text("version: 1\nloggers:\n  root:\n    level: 'WARNING'\n")
 
-    compose_yml = package_dir / "compose.yml"
+    compose_yml = package_dir / "compose.yaml"
     compose_yml.write_text("version: '3'\nservices: {}\n")
 
     module_file = package_dir / "__init__.py"
@@ -77,7 +77,7 @@ def _write_existing_config(env: dict, payload: dict) -> Path:
     """Write a config YAML at the expected location and return its path."""
     config_dir = env['project_root'] / 'config'
     config_dir.mkdir(parents=True, exist_ok=True)
-    config_file = config_dir / "config.yml"
+    config_file = config_dir / "config.yaml"
     with open(config_file, 'w') as f:
         yaml.dump(payload, f)
     return config_file
@@ -87,7 +87,7 @@ class TestConfigurationInit:
     """Test Configuration initialization scenarios."""
 
     def test_fresh_start_creates_config(self, env):
-        config_file = env['project_root'] / 'config' / "config.yml"
+        config_file = env['project_root'] / 'config' / "config.yaml"
         assert not config_file.exists()
 
         config = _TestConfig(env['project_name'], env['source_file'])
@@ -151,8 +151,8 @@ class TestConfigurationInit:
     def test_config_filename_format(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
 
-        assert config.config_filename == 'config.yml'
-        assert config.file_path.name == 'config.yml'
+        assert config.config_filename == 'config.yaml'
+        assert config.file_path.name == 'config.yaml'
 
 
 def _rename_logs_dir(data: dict) -> dict:
@@ -184,7 +184,7 @@ class _MigratedConfig(_TestConfig):
 
 
 def _backups(env: dict) -> list[Path]:
-    return sorted((env['project_root'] / 'config').glob('config.yml.*.bak'))
+    return sorted((env['project_root'] / 'config').glob('config.yaml.*.bak'))
 
 
 class TestConfigurationMigration:
@@ -326,19 +326,19 @@ class TestConfigurationPaths:
 
     def test_file_path_property(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
-        assert config.file_path == config.config_path / 'config.yml'
+        assert config.file_path == config.config_path / 'config.yaml'
 
     def test_filename_property(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
-        assert config.filename == 'config.yml'
+        assert config.filename == 'config.yaml'
 
     def test_logging_config_file_path_property(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
-        assert config.logging_config_file_path == config.config_path / 'logging.yml'
+        assert config.logging_config_file_path == config.config_path / 'logging.yaml'
 
     def test_docker_compose_file_path_property(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
-        assert config.docker_compose_file_path == config.config_path / 'compose.yml'
+        assert config.docker_compose_file_path == config.config_path / 'compose.yaml'
 
     def test_ensure_dirs_creates_all_directories(self, env):
         config = _TestConfig(env['project_name'], env['source_file'])
@@ -428,7 +428,7 @@ class TestConfigurationDefaultFiles:
     def test_skips_existing_default_files(self, env, capsys):
         config_path = env['project_root'] / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        existing_logging = config_path / 'logging.yml'
+        existing_logging = config_path / 'logging.yaml'
         custom_content = "# My custom logging config\nversion: 99\n"
         existing_logging.write_text(custom_content)
 
@@ -436,12 +436,12 @@ class TestConfigurationDefaultFiles:
 
         assert existing_logging.read_text() == custom_content
         captured = capsys.readouterr()
-        assert 'Copied logging.yml' not in captured.out
+        assert 'Copied logging.yaml' not in captured.out
 
     def test_raises_error_for_missing_source_file(self, env):
         env['package']['logging_yml'].unlink()
 
-        with pytest.raises(FileNotFoundError, match="logging.yml not found"):
+        with pytest.raises(FileNotFoundError, match="logging.yaml not found"):
             _TestConfig(env['project_name'], env['source_file'])
 
 
@@ -451,7 +451,7 @@ class TestConfigurationEdgeCases:
     def test_path_string_converted_to_path(self, env):
         config_path = env['project_root'] / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / "config.yml"
+        config_file = config_path / "config.yaml"
 
         config_content = (
             f"__version__: \"{_TestConfig.__version__}\"\n"
@@ -480,7 +480,7 @@ class TestConfigurationEdgeCases:
     def test_empty_config_file_treated_as_missing(self, env, capsys):
         config_path = env['project_root'] / 'config'
         config_path.mkdir(parents=True, exist_ok=True)
-        config_file = config_path / "config.yml"
+        config_file = config_path / "config.yaml"
         config_file.write_text("")
 
         config = _TestConfig(env['project_name'], env['source_file'])
@@ -515,7 +515,7 @@ class TestConfigurationSubclassing:
     """Test that Configuration can be properly subclassed."""
 
     def test_subclass_can_override_default_files(self, env):
-        # Remove compose.yml from package; subclass shouldn't require it.
+        # Remove compose.yaml from package; subclass shouldn't require it.
         env['package']['compose_yml'].unlink()
 
         class MinimalConfiguration(Configuration):

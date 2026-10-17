@@ -14,9 +14,9 @@ import click
 )
 @click.pass_context
 def docker_compose(ctx):
-    """Run docker-compose commands with the project's compose.yml file.
+    """Run docker-compose commands with the project's compose.yaml file.
 
-    This is a convenience wrapper that automatically uses the compose.yml
+    This is a convenience wrapper that automatically uses the compose.yaml
     from your project's config directory.
 
     Examples:
@@ -36,10 +36,10 @@ def docker_compose(ctx):
 
     # Check if compose file exists
     if not compose_file_path.exists():
-        click.echo(f"Error: compose.yml not found at {compose_file_path}", err=True)
+        click.echo(f"Error: compose.yaml not found at {compose_file_path}", err=True)
         ctx.exit(1)
 
-    click.echo(f'Using compose.yml from: {compose_file_path}')
+    click.echo(f'Using compose.yaml from: {compose_file_path}')
 
     # Let the project-specific config prepare the docker context
     # (e.g., set env vars, ensure directories exist, check prerequisites)

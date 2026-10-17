@@ -24,17 +24,17 @@ class Configuration(ABC):
     ``migrations = {"0.1.0": ("0.1.1", upgrade_to_011)}``. A migration receives
     the stored fields without ``__version__`` and returns them in the shape
     ``to_dict()`` produces. Migration runs before any field is read, and the
-    original file is kept as ``config.yml.<random>.bak`` before it is rewritten.
+    original file is kept as ``config.yaml.<random>.bak`` before it is rewritten.
     """
 
     __version__: ClassVar[str] = "0.1.0"
     migrations: ClassVar[dict[str, tuple[str, Migration]]] = {}
 
-    LOGGING_CONFIG_FILENAME = 'logging.yml'
-    DOCKER_COMPOSE_FILENAME = 'compose.yml'
+    LOGGING_CONFIG_FILENAME = 'logging.yaml'
+    DOCKER_COMPOSE_FILENAME = 'compose.yaml'
 
     # Files to copy on initialization, mapped to whether they are required.
-    # Subclasses can override to add/remove files (e.g. packages without compose.yml).
+    # Subclasses can override to add/remove files (e.g. packages without compose.yaml).
     DEFAULT_FILES: dict[str, bool] = {
         LOGGING_CONFIG_FILENAME: True,
         DOCKER_COMPOSE_FILENAME: False,
@@ -51,7 +51,7 @@ class Configuration(ABC):
 
         # fixed paths, since config_path cannot be changed
         self.config_path = self._paths.config_path
-        self.config_filename = 'config.yml'
+        self.config_filename = 'config.yaml'
 
         # load config file, upgrading an older schema before any field is read
         original = self.file_path.read_bytes() if self.file_path.exists() else None

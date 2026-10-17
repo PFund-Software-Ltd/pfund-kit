@@ -166,7 +166,7 @@ def configure_logging(
     overrides: dict[str, Any] | None = None,
     debug: bool = False,
 ) -> dict[str, Any]:
-    '''Load the project's logging.yml and merge it with optional overrides.
+    '''Load the project's logging.yaml and merge it with optional overrides.
 
     Args:
         config: The project's Configuration instance.

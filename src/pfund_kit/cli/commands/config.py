@@ -75,12 +75,12 @@ def list_config(ctx):
 @config.command('open')
 @click.pass_context
 @click.option('--config-file', '--config', '-c', is_flag=True, help='Open the config file')
-@click.option('--docker-file', '--docker', '-d', is_flag=True, help='Open the compose.yml file')
-@click.option('--logging-file', '--logging', '-l', is_flag=True, help='Open the logging.yml file')
+@click.option('--docker-file', '--docker', '-d', is_flag=True, help='Open the compose.yaml file')
+@click.option('--logging-file', '--logging', '-l', is_flag=True, help='Open the logging.yaml file')
 @click.option('--default-editor', '-e', is_flag=True, help='Use system default editor ($VISUAL or $EDITOR)')
 @click.argument('editor', required=False)
 def open_config(ctx, config_file, logging_file, docker_file, default_editor, editor):
-    """Opens the config files, e.g. logging.yml, docker-compose.yml.
+    """Opens the config files, e.g. logging.yaml, compose.yaml.
 
     EDITOR is the optional editor command to use (e.g., "code", "vim", "subl").
     If not specified, prints the file path.
@@ -184,13 +184,13 @@ def set_config(ctx, data_path, log_path, cache_path):
 @click.pass_context
 @click.option('--config-file', '--config', '-c', is_flag=True, help='Reset the config file')
 @click.option('--logging-file', '--logging', '-l', is_flag=True, help='Reset the logging.yaml file')
-@click.option('--docker-file', '--docker', '-d', is_flag=True, help='Reset the compose.yml file')
+@click.option('--docker-file', '--docker', '-d', is_flag=True, help='Reset the compose.yaml file')
 def reset(ctx, config_file, logging_file, docker_file):
     """Reset the configuration to defaults.
     If no flags were set, all files will be reset.
     Args:
         config_file: Reset the config file
-        docker_file: Reset the compose.yml file
+        docker_file: Reset the compose.yaml file
         logging_file: Reset the logging.yaml file for logging config
     """
     config = ctx.obj['config']
