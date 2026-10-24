@@ -18,7 +18,7 @@ from logging.handlers import QueueHandler, QueueListener
 _INIT_LOCK = threading.Lock()
 
 
-def get_ray_num_cpus(self) -> int:
+def get_ray_num_cpus() -> int:
     """Get the number of CPUs available in the Ray cluster."""
     import ray
 
