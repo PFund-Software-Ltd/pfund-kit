@@ -31,17 +31,11 @@ repository = "https://github.com/PFund-Software-Ltd/pfund-kit"
 # documentation = ""
 
 [build-system]
-requires = ["uv_build>=0.13.1,<0.14.0"]
+requires = ["uv_build>=0.13.5,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.uv]
-# FIXME: set it back to "14 days" when the package is stable
-exclude-newer = "0 days"
-
-[tool.pyright]
-typeCheckingMode = "basic"
-# reportAny = false
-# reportExplicitAny = false
+exclude-newer = "14 days"
 
 [tool.uv.build-backend]
 module-name = "pfund_kit"
