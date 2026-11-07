@@ -15,8 +15,8 @@ dependencies = [
     "trogon>=0.6.0 ; sys_platform != 'emscripten'",
     "pyyaml>=6.0.3",
     "tomlkit>=0.15.2",
-    "packaging>=26.3",
-    "pydantic>=2.14.1",
+    "packaging>=26.1",
+    "pydantic>=2.12.5",
     # "platformdirs>=4.3.6",
     "python-dotenv>=1.2.4",
     "prompt-toolkit>=3.0.53",
@@ -31,12 +31,13 @@ repository = "https://github.com/PFund-Software-Ltd/pfund-kit"
 # documentation = ""
 
 [build-system]
-requires = ["uv_build>=0.13.5,<0.14.0"]
+requires = ["uv_build>=0.13.7,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.uv]
 # FIXME: set it back to "14 days" when the package is stable
 exclude-newer = "0 days"
+exclude-newer-package = { uv_build = false }
 
 [tool.uv.build-backend]
 module-name = "pfund_kit"
