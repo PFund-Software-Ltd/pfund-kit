@@ -15,6 +15,21 @@ from pfund_kit.utils.yaml import dump, load
 __all__ = ["Configuration"]
 
 
+def _to_user_path(value: str | Path, name: str) -> Path:
+    """Expand "~" and require an absolute path.
+
+    Path("~/x") is NOT the home dir: pathlib treats "~" as a folder name, so it
+    would silently create "./~/x" in whatever dir the program runs from. A
+    relative path ("data") has the same problem, so it is rejected too.
+    """
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        raise ValueError(
+            f"{name} must be an absolute path or start with '~', got {str(value)!r}"
+        )
+    return path
+
+
 class Configuration(ABC):
     """Project config stored as a versioned YAML file.
 
@@ -88,9 +103,12 @@ class Configuration(ABC):
         default_data_path = self._paths.data_path
         default_log_path = self._paths.log_path
         default_cache_path = self._paths.cache_path
-        self._data_path = Path(self._data.get("data_path", default_data_path))
-        self._log_path = Path(self._data.get("log_path", default_log_path))
-        self._cache_path = Path(self._data.get("cache_path", default_cache_path))
+        try:
+            self.data_path = self._data.get("data_path", default_data_path)
+            self.log_path = self._data.get("log_path", default_log_path)
+            self.cache_path = self._data.get("cache_path", default_cache_path)
+        except ValueError as e:
+            raise ValueError(f"{e}, fix it in {self.file_path}") from e
 
         if needs_save:
             if original:
@@ -131,24 +149,24 @@ class Configuration(ABC):
         return self._log_path
 
     @log_path.setter
-    def log_path(self, value: Path):
-        self._log_path = Path(value)
+    def log_path(self, value: str | Path):
+        self._log_path = _to_user_path(value, "log_path")
 
     @property
     def data_path(self):
         return self._data_path
 
     @data_path.setter
-    def data_path(self, value: Path):
-        self._data_path = Path(value)
+    def data_path(self, value: str | Path):
+        self._data_path = _to_user_path(value, "data_path")
 
     @property
     def cache_path(self):
         return self._cache_path
 
     @cache_path.setter
-    def cache_path(self, value: Path):
-        self._cache_path = Path(value)
+    def cache_path(self, value: str | Path):
+        self._cache_path = _to_user_path(value, "cache_path")
 
     @property
     def filename(self):
@@ -174,11 +192,10 @@ class Configuration(ABC):
         Example:
             def prepare_docker_context(self):
                 import os
-                # Set data paths for docker volumes
-                os.environ['MINIO_DATA_PATH'] = str(self.data_path / 'minio')
+                # Set data path for docker volume
                 os.environ['TIMESCALEDB_DATA_PATH'] = str(self.data_path / 'timescaledb')
-                # Ensure volume directories exist
-                self.ensure_dirs(self.data_path / 'minio', self.data_path / 'timescaledb')
+                # Ensure volume directory exists
+                self.ensure_dirs(self.data_path / 'timescaledb')
         """
         pass
 

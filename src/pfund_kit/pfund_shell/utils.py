@@ -65,14 +65,20 @@ def is_group_command(
 
 
 def _convert_click_command_to_dict(
-    command: Command | Group, dict_value: Literal["help"] | None = None
+    name: str, command: Command | Group, dict_value: Literal["help"] | None = None
 ) -> dict:
-    """Converts a click command or group to a dictionary where key=command name and value=command params dict or None.
+    """Converts a click command or group to {name: nested dict | help | None}.
+
+    `name` is the name the command is registered under in its parent group, NOT
+    `command.name`: an alias (e.g. `rm` for `remove`, `logs` for `log`) is the
+    same Command object under a second key, so `command.name` would collapse it
+    into the original and autocomplete would never offer it.
 
     A click group can have subcommands, which are also commands.
     This function will recursively convert all subcommands to dictionaries.
 
     Args:
+        name: Name the command is registered under
         command: Click Command or Group to convert
         dict_value: if 'help', get the help text of the command, otherwise None
 
@@ -82,16 +88,14 @@ def _convert_click_command_to_dict(
     commands_dict = {}
     if isinstance(command, Group):
         subcommands_dict: dict = {}
-        for command_obj in command.commands.values():
+        for sub_name, sub_command in command.commands.items():
             subcommands_dict.update(
-                _convert_click_command_to_dict(command_obj, dict_value)
+                _convert_click_command_to_dict(sub_name, sub_command, dict_value)
             )
-        commands_dict[command.name] = subcommands_dict
+        commands_dict[name] = subcommands_dict
     elif isinstance(command, Command):
         ctx = Context(command)
-        commands_dict[command.name] = (
-            command.get_help(ctx) if dict_value == "help" else None
-        )
+        commands_dict[name] = command.get_help(ctx) if dict_value == "help" else None
     else:
         raise Exception(f"Unhandled click command type: {type(command)}")
     return commands_dict
@@ -127,7 +131,7 @@ def get_commands_dict(
             command_obj = pfund_shell_group.get_command(ctx, command)
             if command_obj:
                 commands_dict.update(
-                    _convert_click_command_to_dict(command_obj, dict_value)
+                    _convert_click_command_to_dict(command, command_obj, dict_value)
                 )
 
     # Add all command groups as top-level commands (but not if we're already in that context)
@@ -135,9 +139,9 @@ def get_commands_dict(
         # Skip adding the group if we're already inside it (e.g., don't show "pfeed" when in pfeed>)
         if base_command != group_name:
             commands_dict[group_name] = {}
-            for command_obj in command_group.commands.values():
+            for name, command_obj in command_group.commands.items():
                 commands_dict[group_name].update(
-                    _convert_click_command_to_dict(command_obj, dict_value)
+                    _convert_click_command_to_dict(name, command_obj, dict_value)
                 )
 
         # If we're in a specific group context, add its commands at root level
@@ -149,9 +153,9 @@ def get_commands_dict(
                 current_group = cast(Group, current_group.commands[context_command])
 
             # Add commands from current context at root level for easier access
-            for command_obj in current_group.commands.values():
+            for name, command_obj in current_group.commands.items():
                 commands_dict.update(
-                    _convert_click_command_to_dict(command_obj, dict_value)
+                    _convert_click_command_to_dict(name, command_obj, dict_value)
                 )
 
     return commands_dict

@@ -584,3 +584,61 @@ class TestConfigurationSubclassing:
         with open(config.file_path) as f:
             data = yaml.safe_load(f)
         assert data["__version__"] == "1.0"
+
+
+class TestConfigurationUserPaths:
+    """data/log/cache paths: "~" is expanded, relative paths are rejected."""
+
+    def test_tilde_in_config_file_expands_to_home(self, env, tmp_path, monkeypatch):
+        cwd = tmp_path / "cwd"
+        cwd.mkdir()
+        monkeypatch.chdir(cwd)
+        _write_existing_config(
+            env,
+            {
+                "__version__": _TestConfig.__version__,
+                "data_path": "~/mydata",
+                "log_path": "~/mylogs",
+                "cache_path": "~/mycache",
+            },
+        )
+
+        config = _TestConfig(env["project_name"], env["source_file"])
+
+        assert config.data_path == env["home"] / "mydata"
+        assert config.log_path == env["home"] / "mylogs"
+        assert config.cache_path == env["home"] / "mycache"
+        assert (env["home"] / "mydata").is_dir()
+        assert not (cwd / "~").exists()  # the old bug: a literal "~" folder
+
+    @pytest.mark.parametrize("bad", ["data", "./data", "../data"])
+    def test_relative_path_in_config_file_is_rejected(self, env, bad):
+        config_file = _write_existing_config(
+            env,
+            {
+                "__version__": _TestConfig.__version__,
+                "data_path": bad,
+                "log_path": str(env["project_root"] / "logs"),
+                "cache_path": str(env["project_root"] / "cache"),
+            },
+        )
+
+        with pytest.raises(ValueError, match="data_path must be an absolute") as e:
+            _TestConfig(env["project_name"], env["source_file"])
+        assert str(config_file) in str(e.value)  # tells the user which file
+
+    def test_setter_expands_tilde_and_rejects_relative(self, env):
+        config = _TestConfig(env["project_name"], env["source_file"])
+
+        config.data_path = "~/x"
+        assert config.data_path == env["home"] / "x"
+        with pytest.raises(ValueError, match="cache_path must be an absolute"):
+            config.cache_path = "relative/cache"
+
+    def test_tilde_saved_as_absolute(self, env):
+        config = _TestConfig(env["project_name"], env["source_file"])
+        config.log_path = "~/mylogs"
+        config.save()
+
+        saved = yaml.safe_load(config.file_path.read_text())
+        assert str(saved["log_path"]) == str(env["home"] / "mylogs")

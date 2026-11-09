@@ -165,21 +165,30 @@ def open_config(ctx, config_file, logging_file, docker_file, default_editor, edi
             click.echo(f"\nFile location: {file_path}")
 
 
+def _cli_path(value: Path) -> Path:
+    """Absolute path for a CLI arg: expand "~" (even if quoted), then resolve.
+
+    A relative arg is resolved against the cwd at the time of `config set`, so
+    what gets saved is always absolute.
+    """
+    return value.expanduser().resolve()
+
+
 @config.command("set")
 @click.pass_context
 @click.option(
     "--data-path",
     "--data",
-    type=click.Path(resolve_path=True),
+    type=click.Path(path_type=Path),
     help="Set the data path",
 )
 @click.option(
-    "--log-path", "--log", type=click.Path(resolve_path=True), help="Set the log path"
+    "--log-path", "--log", type=click.Path(path_type=Path), help="Set the log path"
 )
 @click.option(
     "--cache-path",
     "--cache",
-    type=click.Path(resolve_path=True),
+    type=click.Path(path_type=Path),
     help="Set the cache path",
 )
 def set_config(ctx, data_path, log_path, cache_path):
@@ -200,14 +209,14 @@ def set_config(ctx, data_path, log_path, cache_path):
     # Update configuration and track changes
     updated = []
     if data_path:
-        config.data_path = Path(data_path)
-        updated.append(f"data_path -> {data_path}")
+        config.data_path = _cli_path(data_path)
+        updated.append(f"data_path -> {config.data_path}")
     if log_path:
-        config.log_path = Path(log_path)
-        updated.append(f"log_path -> {log_path}")
+        config.log_path = _cli_path(log_path)
+        updated.append(f"log_path -> {config.log_path}")
     if cache_path:
-        config.cache_path = Path(cache_path)
-        updated.append(f"cache_path -> {cache_path}")
+        config.cache_path = _cli_path(cache_path)
+        updated.append(f"cache_path -> {config.cache_path}")
 
     config.save()
     click.echo(f"Updated {config.filename}:")

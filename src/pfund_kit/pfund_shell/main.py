@@ -61,7 +61,10 @@ def start_shell():
     3. Nested contexts (e.g., pfeed.config>)
     4. Execute commands using Click
     """
-    from pfund_kit.pfund_shell.shell_group import create_pfund_shell_group
+    from pfund_kit.pfund_shell.shell_group import (
+        ShellCommandCollection,
+        create_pfund_shell_group,
+    )
 
     # Discover all registered command groups
     command_groups = discover_command_groups()
@@ -218,6 +221,17 @@ def start_shell():
                     )
                 except click.exceptions.ClickException as e:
                     e.show()
+            elif first_command in ShellCommandCollection.SHARED_COMMAND_NAMES:
+                # Shared commands (remove, config, ...) act on ONE project's paths,
+                # so at root it's ambiguous which project is meant. Never guess:
+                # picking the first group would e.g. delete the wrong project's data.
+                typed = " ".join(command_splits)
+                examples = " / ".join(f"'{name} {typed}'" for name in command_groups)
+                click.echo(
+                    f"'{first_command}' is per-project, which one? "
+                    f"Type {examples}, or switch first (e.g. "
+                    f"'{next(iter(command_groups))}')."
+                )
             else:
                 # We're at root level - find which command group owns this command
                 # and invoke through that group to ensure proper context setup (ctx.obj)
