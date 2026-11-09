@@ -11,7 +11,6 @@ from pydantic import BaseModel, ConfigDict
 from pfund_kit.migration import Migration, migrate
 from pfund_kit.utils import toml
 
-
 __all__ = ["Migration", "Settings"]
 
 
@@ -34,12 +33,16 @@ class Settings(BaseModel):
 
     @classmethod
     def _migrate(cls, data: dict[str, Any]) -> dict[str, Any]:
-        return migrate(data, target=cls.__version__, migrations=cls.migrations, name="Settings")
+        return migrate(
+            data, target=cls.__version__, migrations=cls.migrations, name="Settings"
+        )
 
     @staticmethod
     def _read(path: Path) -> tuple[bytes | None, dict[str, Any]]:
         original = path.read_bytes() if path.exists() else None
-        document = tomlkit.parse(original.decode("utf-8")) if original is not None else {}
+        document = (
+            tomlkit.parse(original.decode("utf-8")) if original is not None else {}
+        )
         # Match the shared TOML loader's conversion of the "None" sentinel.
         return original, toml._toml_to_python(document)
 
@@ -54,9 +57,15 @@ class Settings(BaseModel):
         original, stored = cls._read(path)
         data = cls._migrate(stored) if original is not None else {}
         cls._validate_file(data)
-        settings = cls.model_validate(data.get(section, {}) if section is not None else data)
+        settings = cls.model_validate(
+            data.get(section, {}) if section is not None else data
+        )
         migrated = original is not None and stored.get("__version__") != cls.__version__
-        if original is None or migrated or (section is not None and section not in data):
+        if (
+            original is None
+            or migrated
+            or (section is not None and section not in data)
+        ):
             if section is None:
                 data = settings.to_dict()
             else:
@@ -84,7 +93,9 @@ class Settings(BaseModel):
         else:
             data[section] = fields
         self._validate_file(data)
-        migrated = original is not None and stored.get("__version__") != self.__version__
+        migrated = (
+            original is not None and stored.get("__version__") != self.__version__
+        )
         self._write_file(path, data, original, backup=migrated)
 
     @classmethod
@@ -96,13 +107,20 @@ class Settings(BaseModel):
             prepared = toml._prepare_for_toml(payload, auto_inline=True)
         else:
             prepared = toml._prepare_for_toml(payload, inline_keys=set(cls.inline_keys))
-        document = tomlkit.parse(original.decode("utf-8")) if original is not None else tomlkit.document()
+        document = (
+            tomlkit.parse(original.decode("utf-8"))
+            if original is not None
+            else tomlkit.document()
+        )
         for key in list(document):
             if key not in payload:
                 del document[key]
         for key, value in prepared.items():
             # Preserve formatting and comments in unchanged sections.
-            if key not in document or toml._toml_to_python(document[key]) != payload[key]:
+            if (
+                key not in document
+                or toml._toml_to_python(document[key]) != payload[key]
+            ):
                 document[key] = value
         content = tomlkit.dumps(document).encode("utf-8")
         if content == original:
@@ -110,13 +128,17 @@ class Settings(BaseModel):
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary: Path | None = None
         try:
-            with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as stream:
+            with tempfile.NamedTemporaryFile(
+                dir=path.parent, prefix=f".{path.name}.", delete=False
+            ) as stream:
                 temporary = Path(stream.name)
                 stream.write(content)
                 stream.flush()
                 os.fsync(stream.fileno())
             if (path.read_bytes() if path.exists() else None) != original:
-                raise RuntimeError(f"Settings changed while saving {path}; reload before retrying")
+                raise RuntimeError(
+                    f"Settings changed while saving {path}; reload before retrying"
+                )
             if original is not None:
                 os.chmod(temporary, path.stat().st_mode & 0o777)
             if backup and original is not None:

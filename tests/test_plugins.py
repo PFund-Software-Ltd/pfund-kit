@@ -43,47 +43,69 @@ def install_plugins(mocker: MockerFixture) -> Callable[..., None]:
     mocker.patch.dict(sys.modules, {FAKE_MODULE: module})
 
     def _install(*eps: EntryPoint) -> None:
-        mocker.patch.object(plugins, "entry_points", lambda group: [ep for ep in eps if ep.group == group])
+        mocker.patch.object(
+            plugins,
+            "entry_points",
+            lambda group: [ep for ep in eps if ep.group == group],
+        )
 
     return _install
 
 
-def test_names_are_uppercased(registry: PluginRegistry, install_plugins: Callable[..., None]):
+def test_names_are_uppercased(
+    registry: PluginRegistry, install_plugins: Callable[..., None]
+):
     install_plugins(_ep("fake"))
     assert list(registry.get_entry_points()) == ["FAKE"]
 
 
-def test_only_own_group_is_discovered(registry: PluginRegistry, install_plugins: Callable[..., None]):
+def test_only_own_group_is_discovered(
+    registry: PluginRegistry, install_plugins: Callable[..., None]
+):
     install_plugins(_ep("fake"), _ep("other", group="other.plugins"))
     assert registry.list_names() == ["FAKE"]
 
 
-def test_duplicate_names_raise(registry: PluginRegistry, install_plugins: Callable[..., None]):
+def test_duplicate_names_raise(
+    registry: PluginRegistry, install_plugins: Callable[..., None]
+):
     install_plugins(_ep("fake"), _ep("FAKE"))
-    with pytest.raises(ValueError, match="widget FAKE is registered by multiple packages"):
+    with pytest.raises(
+        ValueError, match="widget FAKE is registered by multiple packages"
+    ):
         registry.get_entry_points()
 
 
-def test_list_names_is_sorted(registry: PluginRegistry, install_plugins: Callable[..., None]):
+def test_list_names_is_sorted(
+    registry: PluginRegistry, install_plugins: Callable[..., None]
+):
     install_plugins(_ep("zeta"), _ep("alpha"))
     assert registry.list_names() == ["ALPHA", "ZETA"]
 
 
-def test_no_plugins_installed(registry: PluginRegistry, install_plugins: Callable[..., None]):
+def test_no_plugins_installed(
+    registry: PluginRegistry, install_plugins: Callable[..., None]
+):
     install_plugins()
     assert registry.list_names() == []
     with pytest.raises(ValueError, match="unknown widget 'fake'"):
         registry.load("fake")
 
 
-def test_get_entry_point_is_case_insensitive(registry: PluginRegistry, install_plugins: Callable[..., None]):
+def test_get_entry_point_is_case_insensitive(
+    registry: PluginRegistry, install_plugins: Callable[..., None]
+):
     install_plugins(_ep("fake"))
     assert registry.get_entry_point("Fake").name == "fake"
 
 
-def test_get_entry_point_unknown(registry: PluginRegistry, install_plugins: Callable[..., None]):
+def test_get_entry_point_unknown(
+    registry: PluginRegistry, install_plugins: Callable[..., None]
+):
     install_plugins(_ep("fake"))
-    with pytest.raises(ValueError, match=r"unknown widget 'nope', installed widgets: \['FAKE'\]"):
+    with pytest.raises(
+        ValueError, match=r"unknown widget 'nope', installed widgets: \['FAKE'\]"
+    ):
         registry.get_entry_point("nope")
 
 
@@ -92,7 +114,9 @@ def test_load(registry: PluginRegistry, install_plugins: Callable[..., None]):
     assert registry.load("fake") is FakePlugin
 
 
-def test_entry_points_are_cached_until_cleared(registry: PluginRegistry, install_plugins: Callable[..., None]):
+def test_entry_points_are_cached_until_cleared(
+    registry: PluginRegistry, install_plugins: Callable[..., None]
+):
     install_plugins(_ep("fake"))
     assert registry.list_names() == ["FAKE"]
     install_plugins(_ep("fake"), _ep("new"))
@@ -106,16 +130,29 @@ def test_import_official_plugin(install_plugins: Callable[..., None]):
 
 
 def test_import_official_plugin_missing_plugin_has_install_hint():
-    with pytest.raises(ModuleNotFoundError, match=r"pe\.Missing requires the official plugin 'not-installed-plugin', install it with: pip install host\[missing\]"):
-        import_official_plugin("not_installed_plugin", "Missing", label="pe.Missing", install="host[missing]")
+    with pytest.raises(
+        ModuleNotFoundError,
+        match=r"pe\.Missing requires the official plugin 'not-installed-plugin', install it with: pip install host\[missing\]",
+    ):
+        import_official_plugin(
+            "not_installed_plugin",
+            "Missing",
+            label="pe.Missing",
+            install="host[missing]",
+        )
 
 
 def test_import_official_plugin_defaults_to_package_name():
-    with pytest.raises(ModuleNotFoundError, match=r"Missing requires .* pip install not-installed-plugin$"):
+    with pytest.raises(
+        ModuleNotFoundError,
+        match=r"Missing requires .* pip install not-installed-plugin$",
+    ):
         import_official_plugin("not_installed_plugin", "Missing")
 
 
-def test_import_official_plugin_keeps_broken_import_inside_plugin(mocker: MockerFixture):
+def test_import_official_plugin_keeps_broken_import_inside_plugin(
+    mocker: MockerFixture,
+):
     err = ModuleNotFoundError("No module named 'some_dep'", name="some_dep")
     mocker.patch.object(plugins, "import_module", side_effect=err)
     with pytest.raises(ModuleNotFoundError) as exc_info:

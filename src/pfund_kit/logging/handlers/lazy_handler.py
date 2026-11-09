@@ -1,9 +1,14 @@
 """Lazy handler that defers file creation until first log message."""
 
+from __future__ import annotations
+
 import logging
 import threading
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, override
+
+if TYPE_CHECKING:
+    from logging import _FilterType
 
 
 class LazyHandler(logging.Handler):
@@ -28,7 +33,7 @@ class LazyHandler(logging.Handler):
         target_class: str | None = None,
         target_kwargs: dict[str, Any] | None = None,
         level: int = logging.NOTSET,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize the lazy handler.
@@ -69,7 +74,7 @@ class LazyHandler(logging.Handler):
 
             try:
                 # Import the target class
-                module_name, class_name = self._target_class.rsplit('.', 1)
+                module_name, class_name = self._target_class.rsplit(".", 1)
                 module = __import__(module_name, fromlist=[class_name])
                 handler_class = getattr(module, class_name)
             except (ValueError, ImportError, AttributeError) as e:
@@ -80,7 +85,9 @@ class LazyHandler(logging.Handler):
             try:
                 # Create the target handler with filename as first argument (if provided)
                 if self._filename is not None:
-                    self._target_handler = handler_class(self._filename, **self._target_kwargs)
+                    self._target_handler = handler_class(
+                        self._filename, **self._target_kwargs
+                    )
                 else:
                     self._target_handler = handler_class(**self._target_kwargs)
             except Exception as e:
@@ -94,7 +101,7 @@ class LazyHandler(logging.Handler):
             self._target_handler.setLevel(self.level)
             for filter_obj in self.filters:
                 self._target_handler.addFilter(filter_obj)
-            if hasattr(self, 'name') and self.name:
+            if hasattr(self, "name") and self.name:
                 self._target_handler.name = self.name
 
         return self._target_handler
@@ -111,19 +118,22 @@ class LazyHandler(logging.Handler):
         target = self._ensure_target_handler()
         target.emit(record)
 
+    @override
     def setFormatter(self, fmt: logging.Formatter | None) -> None:
         """Set the formatter, applying it to target handler if it exists."""
         super().setFormatter(fmt)
         if self._target_handler:
             self._target_handler.setFormatter(fmt)
 
-    def addFilter(self, filter: logging.Filter) -> None:
+    @override
+    def addFilter(self, filter: _FilterType) -> None:
         """Add a filter, applying it to target handler if it exists."""
         super().addFilter(filter)
         if self._target_handler:
             self._target_handler.addFilter(filter)
 
-    def removeFilter(self, filter: logging.Filter) -> None:
+    @override
+    def removeFilter(self, filter: _FilterType) -> None:
         """Remove a filter, removing it from target handler if it exists."""
         super().removeFilter(filter)
         if self._target_handler:
@@ -143,6 +153,7 @@ class LazyHandler(logging.Handler):
             self._target_handler.flush()
         super().flush()
 
+    @override
     def handleError(self, record: logging.LogRecord) -> None:
         """
         Handle errors during emit.

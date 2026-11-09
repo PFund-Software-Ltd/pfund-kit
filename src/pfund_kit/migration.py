@@ -6,7 +6,6 @@ from typing import Any
 
 from packaging.version import Version
 
-
 __all__ = ["Migration", "migrate"]
 
 
@@ -49,6 +48,8 @@ def migrate(
             raise ValueError(f"Invalid {label} migration: {version} -> {next_version}")
         data = function(data)
         if not isinstance(data, dict) or "__version__" in data:
-            raise ValueError(f"A {label} migration must return fields without __version__")
+            raise ValueError(
+                f"A {label} migration must return fields without __version__"
+            )
         version = next_version
     return data

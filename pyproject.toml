@@ -20,6 +20,7 @@ dependencies = [
     # "platformdirs>=4.3.6",
     "python-dotenv>=1.2.4",
     "prompt-toolkit>=3.0.53",
+    "pytz>=2026.6",
 ]
 
 [project.scripts]
@@ -42,3 +43,12 @@ exclude-newer-package = { uv_build = false }
 [tool.uv.build-backend]
 module-name = "pfund_kit"
 module-root = "src"
+
+[tool.pytest.ini_options]
+markers = [
+    "smoke: Run the most important tests",
+]
+addopts = "--strict-markers --no-header"
+
+[tool.ruff]
+extend = "afterpython/ruff.toml"

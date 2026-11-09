@@ -1,37 +1,39 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
+
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
+
 if TYPE_CHECKING:
     from pathlib import Path
 
+import datetime
 import os
 import timeit
-import datetime
 
 from pfund_kit.enums.notebook_type import NotebookType
 
-
 __all__ = [
-    'load_env_file',
-    'get_free_port',
-    'get_last_modified_time',
-    'get_notebook_type',
-    'deep_merge',
-    'time_import',
-    'classproperty',
+    "classproperty",
+    "deep_merge",
+    "get_free_port",
+    "get_last_modified_time",
+    "get_notebook_type",
+    "load_env_file",
+    "time_import",
 ]
 
 
-T = TypeVar("T")
-
-
-class classproperty(Generic[T]):
+class classproperty[T]:  # noqa: N801 - lowercase like builtin property
     def __init__(self, fget: Callable[[Any], T]) -> None:
         self.fget = fget
+
     def __get__(self, obj: object, owner: type | None = None) -> T:
         return self.fget(owner)
 
 
-def load_env_file(env: str = '', verbose: bool = False, override: bool = False) -> str | None:
+def load_env_file(
+    env: str = "", verbose: bool = False, override: bool = False
+) -> str | None:
     """
     Load environment-specific .env file.
 
@@ -51,21 +53,23 @@ def load_env_file(env: str = '', verbose: bool = False, override: bool = False) 
     """
     from dotenv import find_dotenv, load_dotenv
 
-    filename = f'.env.{env.lower()}' if env else '.env'
-    env_file_path = find_dotenv(filename=filename, usecwd=True, raise_error_if_not_found=False)
+    filename = f".env.{env.lower()}" if env else ".env"
+    env_file_path = find_dotenv(
+        filename=filename, usecwd=True, raise_error_if_not_found=False
+    )
 
     if env_file_path:
         load_dotenv(env_file_path, override=override)
         if verbose:
-            print(f'Loaded {filename} from {env_file_path}')
+            print(f"Loaded {filename} from {env_file_path}")
         return env_file_path
     else:
         if verbose:
-            print(f'{filename} not found')
+            print(f"{filename} not found")
         return None
 
 
-def get_free_port(host: str = '127.0.0.1') -> int:
+def get_free_port(host: str = "127.0.0.1") -> int:
     """
     Return an ephemeral TCP port chosen by the OS.
 
@@ -73,18 +77,19 @@ def get_free_port(host: str = '127.0.0.1') -> int:
     this function returns.
     """
     import socket
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, 0))
         return s.getsockname()[1]
 
 
-def get_last_modified_time(file_path: Path | str, tz=datetime.timezone.utc) -> datetime.datetime:
-    '''
+def get_last_modified_time(file_path: Path | str, tz=datetime.UTC) -> datetime.datetime:
+    """
     Return the file's last modified time (mtime) as a timezone-aware datetime.
 
     This reads the filesystem's modification timestamp (seconds since the Unix epoch)
     and converts it into a `datetime` with the provided timezone.
-    '''
+    """
     if not isinstance(tz, datetime.tzinfo):
         raise TypeError("tz must be a datetime.tzinfo instance")
     # Get the last modified time in seconds since epoch
@@ -100,12 +105,13 @@ def get_notebook_type() -> NotebookType | None:
     if marimo_spec is not None:
         try:
             import marimo as mo
+
             if mo.running_in_notebook():
                 return NotebookType.marimo
         except (ImportError, AttributeError):
             pass
 
-    if any(key.startswith(('JUPYTER_', 'JPY_')) for key in os.environ):
+    if any(key.startswith(("JUPYTER_", "JPY_")) for key in os.environ):
         return NotebookType.jupyter
 
     # if 'VSCODE_PID' in os.environ:
@@ -230,19 +236,19 @@ for k in to_remove:
     # Calculate standard deviation (sample stdev, n-1 denominator)
     if repeat >= 2:
         variance = sum((t - mean) ** 2 for t in times) / (repeat - 1)
-        stdev = variance ** 0.5
+        stdev = variance**0.5
     else:
         stdev = None
 
     result = {
-        'best': best,
-        'worst': worst,
-        'mean': mean,
-        'stdev': stdev,
-        'times': times,
-        'modules_loaded': modules_loaded,
-        'package': package_name,
-        'repeat': repeat,
+        "best": best,
+        "worst": worst,
+        "mean": mean,
+        "stdev": stdev,
+        "times": times,
+        "modules_loaded": modules_loaded,
+        "package": package_name,
+        "repeat": repeat,
     }
 
     if verbose:

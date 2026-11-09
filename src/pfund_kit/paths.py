@@ -33,7 +33,7 @@ def _detect_project_layout(source_file: Path) -> tuple[str, Path, Path | None]:
     current = package_path
     for _ in range(10):  # Look up to 10 levels (handles deep nesting)
         current = current.parent
-        if (current / 'pyproject.toml').exists():
+        if (current / "pyproject.toml").exists():
             project_root = current
             break
 
@@ -53,13 +53,20 @@ class ProjectPaths:
                         If None, auto-detects from the caller's __file__.
         """
         if source_file is None:
-            frame = inspect.currentframe().f_back
-            source_file = frame.f_globals['__file__']
+            frame = inspect.currentframe()
+            caller = frame.f_back if frame is not None else None
+            if caller is None:
+                raise RuntimeError(
+                    "Cannot detect the caller's __file__, pass source_file explicitly"
+                )
+            source_file = caller.f_globals["__file__"]
 
         self._source_file = Path(source_file)
 
         # Auto-detect layout and paths
-        detected_name, detected_package, detected_root = _detect_project_layout(self._source_file)
+        detected_name, detected_package, detected_root = _detect_project_layout(
+            self._source_file
+        )
 
         # Use provided project_name or fall back to detected
         self.project_name = project_name or detected_name
@@ -82,12 +89,12 @@ class ProjectPaths:
         self.project_root = project_root
 
         # User paths — all under ~/.{project_name}/ regardless of OS.
-        user_root = Path.home() / f'.{self.project_name}'
+        user_root = Path.home() / f".{self.project_name}"
         self.user_root = user_root
-        self.log_path = user_root / 'logs'
-        self.data_path = user_root / 'data'
-        self.cache_path = user_root / 'cache'
-        self.config_path = user_root / 'config'
+        self.log_path = user_root / "logs"
+        self.data_path = user_root / "data"
+        self.cache_path = user_root / "cache"
+        self.config_path = user_root / "config"
         # DEPRECATED: previous platform-native layout (kept for reference).
         # self.log_path = Path(user_log_dir()) / self.project_name
         # self.data_path = Path(user_data_dir()) / self.project_name

@@ -1,11 +1,12 @@
 import warnings
 from threading import Lock
+from typing import ClassVar
 
 from pfund_kit.utils import get_notebook_type
 
 
 class SingletonMeta(type):
-    _instances: dict[type, object] = {}
+    _instances: ClassVar[dict[type, object]] = {}
     _lock = Lock()
 
     def __call__(cls, *args, **kwargs):

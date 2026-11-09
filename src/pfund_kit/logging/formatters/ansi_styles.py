@@ -28,7 +28,7 @@ def style_to_ansi(style_str: str) -> str:
         '\x1b[1;4;36m'
     """
     if not style_str:
-        return ''
+        return ""
 
     try:
         rich_style = Style.parse(style_str)
@@ -47,17 +47,17 @@ def style_to_ansi(style_str: str) -> str:
 
         # Output is like: "\x1b[1;31mX\x1b[0m"
         # Extract just the opening codes (everything before 'X')
-        if 'X' in output:
-            return output.split('X')[0]
+        if "X" in output:
+            return output.split("X")[0]
 
-        return ''
+        return ""
 
     except Exception:
-        return ''
+        return ""
 
 
 # ANSI reset code
-RESET = '\033[0m'
+RESET = "\033[0m"
 
 
-__all__ = ['style_to_ansi', 'RESET']
+__all__ = ["RESET", "style_to_ansi"]

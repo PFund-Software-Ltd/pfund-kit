@@ -28,10 +28,8 @@ def create_cli_group(
     Returns:
         Click Group that can be extended with commands
     """
-    @click.group(
-        name=name,
-        context_settings={"help_option_names": ["-h", "--help"]}
-    )
+
+    @click.group(name=name, context_settings={"help_option_names": ["-h", "--help"]})
     @click.pass_context
     @click.version_option(version=version, package_name=package_name or name)
     def cli_group(ctx):
@@ -41,6 +39,6 @@ def create_cli_group(
             init_context(ctx)
 
     if with_tui:
-        cli_group = tui(command='tui', help="Open terminal UI")(cli_group)
+        cli_group = tui(command="tui", help="Open terminal UI")(cli_group)
 
     return cli_group

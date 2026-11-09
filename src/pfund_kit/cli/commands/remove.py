@@ -34,7 +34,9 @@ def _remove_path(base_path: Path, target: str | None, path_name: str, ctx):
             for item in base_path.iterdir():
                 if item.name.lower() == target.lower():
                     target_path = item
-                    click.echo(f"Found '{item.name}' (case-insensitive match for '{target}')")
+                    click.echo(
+                        f"Found '{item.name}' (case-insensitive match for '{target}')"
+                    )
                     break
 
     # Check if target exists
@@ -54,7 +56,9 @@ def _remove_path(base_path: Path, target: str | None, path_name: str, ctx):
             click.echo(f"{path_name} file cleared successfully!")
         elif target_path.is_dir():
             if clear_all:
-                click.echo(f"Clearing entire {path_name.lower()} directory: {base_path}")
+                click.echo(
+                    f"Clearing entire {path_name.lower()} directory: {base_path}"
+                )
                 shutil.rmtree(base_path)
                 os.makedirs(base_path, exist_ok=True)
                 click.echo(f"{path_name} directory cleared successfully!")
@@ -63,13 +67,13 @@ def _remove_path(base_path: Path, target: str | None, path_name: str, ctx):
                 shutil.rmtree(target_path)
                 click.echo(f"{path_name} folder cleared successfully!")
     except Exception as e:
-        click.echo(f"Error clearing {path_name.lower()}: {str(e)}", err=True)
+        click.echo(f"Error clearing {path_name.lower()}: {e!s}", err=True)
         ctx.exit(1)
 
 
 @remove.command()
 @click.pass_context
-@click.argument('target', type=str, required=False)
+@click.argument("target", type=str, required=False)
 def cache(ctx, target):
     """Remove cache directory or specific cache files/folders.
 
@@ -78,13 +82,13 @@ def cache(ctx, target):
         pfeed remove cache api          # Remove cache/api folder
         pfeed remove cache models.pkl   # Remove cache/models.pkl file
     """
-    config = ctx.obj['config']
+    config = ctx.obj["config"]
     _remove_path(config.cache_path, target, "Cache", ctx)
 
 
 @remove.command()
 @click.pass_context
-@click.argument('target', type=str, required=False)
+@click.argument("target", type=str, required=False)
 def data(ctx, target):
     """Remove data directory or specific data files/folders.
 
@@ -93,13 +97,13 @@ def data(ctx, target):
         pfeed remove data minio         # Remove data/minio folder
         pfeed remove data backup.db     # Remove data/backup.db file
     """
-    config = ctx.obj['config']
+    config = ctx.obj["config"]
     _remove_path(config.data_path, target, "Data", ctx)
 
 
 @remove.command()
 @click.pass_context
-@click.argument('target', type=str, required=False)
+@click.argument("target", type=str, required=False)
 def log(ctx, target):
     """Remove log directory or specific log files/folders.
 
@@ -108,5 +112,5 @@ def log(ctx, target):
         pfeed remove log app            # Remove log/app folder
         pfeed remove log error.log      # Remove log/error.log file
     """
-    config = ctx.obj['config']
+    config = ctx.obj["config"]
     _remove_path(config.log_path, target, "Log", ctx)

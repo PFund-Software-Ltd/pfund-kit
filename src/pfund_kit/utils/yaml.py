@@ -7,34 +7,35 @@ can be dumped and loaded using standard yaml.dump()/yaml.load() or yaml.safe_dum
 
 Uses YAML tags (!decimal, !path) to preserve type information for round-trips.
 """
+
+from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
-from decimal import Decimal
-from typing import Any, Literal, TypeAlias, cast, overload
+from typing import Any, Literal, cast, overload
 
 import yaml
-
+import yaml.representer
 
 # =============================================================================
 # YAML Tags
 # =============================================================================
-DECIMAL_TAG = '!decimal'
-PATH_TAG = '!path'
+DECIMAL_TAG = "!decimal"
+PATH_TAG = "!path"
 
 # YAML top-level documents can be mappings, sequences, or scalar values.
-YAMLScalar: TypeAlias = str | int | float | bool | None | Decimal | Path
-YAMLDocument: TypeAlias = YAMLScalar | dict[str, Any] | list[Any]
+type YAMLScalar = str | int | float | bool | Decimal | Path | None
+type YAMLDocument = YAMLScalar | dict[str, Any] | list[Any]
 
 
 # =============================================================================
 # Representers (Python -> YAML)
 # =============================================================================
 def _represent_decimal(dumper: yaml.Dumper, data: Decimal) -> yaml.ScalarNode:
-    return dumper.represent_scalar(DECIMAL_TAG, str(data))  # pyright: ignore[reportUnknownMemberType]
+    return dumper.represent_scalar(DECIMAL_TAG, str(data))
 
 
 def _represent_path(dumper: yaml.Dumper, data: Path) -> yaml.ScalarNode:
-    return dumper.represent_scalar(PATH_TAG, str(data))  # pyright: ignore[reportUnknownMemberType]
+    return dumper.represent_scalar(PATH_TAG, str(data))
 
 
 # =============================================================================
@@ -53,9 +54,11 @@ def _construct_path(loader: yaml.Loader, node: yaml.ScalarNode) -> Path:
 # =============================================================================
 # Register for SafeDumper / SafeLoader (yaml.safe_dump / yaml.safe_load)
 # =============================================================================
-yaml.SafeDumper.add_multi_representer(StrEnum, yaml.representer.SafeRepresenter.represent_str)
-yaml.SafeDumper.add_representer(Decimal, _represent_decimal)  # pyright: ignore[reportArgumentType]
-yaml.SafeDumper.add_multi_representer(Path, _represent_path)  # pyright: ignore[reportArgumentType]
+yaml.SafeDumper.add_multi_representer(
+    StrEnum, yaml.representer.SafeRepresenter.represent_str
+)
+yaml.SafeDumper.add_representer(Decimal, _represent_decimal)
+yaml.SafeDumper.add_multi_representer(Path, _represent_path)
 
 yaml.SafeLoader.add_constructor(DECIMAL_TAG, _construct_decimal)
 yaml.SafeLoader.add_constructor(PATH_TAG, _construct_path)
@@ -75,6 +78,7 @@ yaml.Loader.add_constructor(PATH_TAG, _construct_path)
 # =============================================================================
 # Convenience Functions
 # =============================================================================
+
 
 @overload
 def load(
@@ -130,10 +134,12 @@ def load(
         return None
 
     # Determine loader
-    loader: type[yaml.SafeLoader] | type[yaml.Loader] = yaml.SafeLoader if safe else yaml.Loader
+    loader: type[yaml.SafeLoader] | type[yaml.Loader] = (
+        yaml.SafeLoader if safe else yaml.Loader
+    )
 
     # Load file
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         if multi_document:
             result = cast(list[YAMLDocument], list(yaml.load_all(f, Loader=loader)))
             return result or None
@@ -172,11 +178,13 @@ def dump(
         dump(data, "config.yaml", default_flow_style=False, allow_unicode=True)
     """
     # Set defaults
-    kwargs.setdefault('default_flow_style', False)
-    kwargs.setdefault('allow_unicode', True)
+    kwargs.setdefault("default_flow_style", False)
+    kwargs.setdefault("allow_unicode", True)
 
     # Determine dumper
-    dumper: type[yaml.SafeDumper] | type[yaml.Dumper] = yaml.SafeDumper if safe else yaml.Dumper
+    dumper: type[yaml.SafeDumper] | type[yaml.Dumper] = (
+        yaml.SafeDumper if safe else yaml.Dumper
+    )
 
     # Convert to Path and create parent directories
     path = Path(file_path)
@@ -184,10 +192,10 @@ def dump(
 
     # Append mode: add document separator and append
     if append and path.exists():
-        with open(path, 'a', encoding='utf-8') as f:
-            _ = f.write('\n---\n')
+        with open(path, "a", encoding="utf-8") as f:
+            _ = f.write("\n---\n")
             yaml.dump(data, f, Dumper=dumper, **kwargs)
     else:
         # Overwrite mode
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             yaml.dump(data, f, Dumper=dumper, **kwargs)

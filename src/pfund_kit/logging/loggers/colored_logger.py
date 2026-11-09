@@ -1,8 +1,13 @@
 # VIBE-CODED
 """Custom logger that supports a style parameter for colored output."""
 
+from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 class ColoredLogger(logging.Logger):
@@ -34,9 +39,9 @@ class ColoredLogger(logging.Logger):
         self,
         level: int,
         msg: object,
-        args: tuple[Any, ...],
+        args: tuple[object, ...] | Mapping[str, object],
         exc_info: Any = None,
-        extra: dict[str, Any] | None = None,
+        extra: Mapping[str, object] | None = None,
         stack_info: bool = False,
         stacklevel: int = 1,
         style: str | None = None,
@@ -54,9 +59,8 @@ class ColoredLogger(logging.Logger):
             style: Rich-compatible style string (e.g., "bold red", "italic cyan").
         """
         if style is not None:
-            if extra is None:
-                extra = {}
-            extra['style'] = style
+            # copy so the caller's extra dict isn't mutated
+            extra = {**(extra or {}), "style": style}
 
         # Increment stacklevel by 1 to account for this wrapper frame,
         # so the correct caller location is reported instead of colored_logger.py
@@ -69,10 +73,30 @@ class ColoredLogger(logging.Logger):
     # of the actual caller. The stdlib implementations already forward the
     # `style` kwarg to the overridden _log above.
     if TYPE_CHECKING:
-        def debug(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
-        def info(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
-        def warning(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
-        def error(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
-        def critical(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
-        def exception(self, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
-        def log(self, level: int, msg: object, *args: Any, style: str | None = None, **kwargs: Any) -> None: ...
+
+        def debug(
+            self, msg: object, *args: Any, style: str | None = None, **kwargs: Any
+        ) -> None: ...
+        def info(
+            self, msg: object, *args: Any, style: str | None = None, **kwargs: Any
+        ) -> None: ...
+        def warning(
+            self, msg: object, *args: Any, style: str | None = None, **kwargs: Any
+        ) -> None: ...
+        def error(
+            self, msg: object, *args: Any, style: str | None = None, **kwargs: Any
+        ) -> None: ...
+        def critical(
+            self, msg: object, *args: Any, style: str | None = None, **kwargs: Any
+        ) -> None: ...
+        def exception(
+            self, msg: object, *args: Any, style: str | None = None, **kwargs: Any
+        ) -> None: ...
+        def log(
+            self,
+            level: int,
+            msg: object,
+            *args: Any,
+            style: str | None = None,
+            **kwargs: Any,
+        ) -> None: ...

@@ -1,6 +1,7 @@
 import os
 from logging import Filter
 from pathlib import Path
+from typing import ClassVar
 
 from pfund_kit.paths import _detect_project_layout
 
@@ -14,7 +15,7 @@ class TrimmedPathFilter(Filter):
     """
 
     # Cache: maps resolved file path -> project root (or None if not found)
-    _project_root_cache: dict[str, Path | None] = {}
+    _project_root_cache: ClassVar[dict[str, Path | None]] = {}
 
     @staticmethod
     def trim_path(pathname: str | Path) -> str:
@@ -37,8 +38,8 @@ class TrimmedPathFilter(Filter):
 
         # Handle site-packages for both Unix and Windows
         # e.g., /usr/lib/python3.11/site-packages/requests/api.py -> requests/api.py
-        if 'site-packages' + os.sep in pathname or 'site-packages/' in pathname:
-            for sep in [f'site-packages{os.sep}', 'site-packages/']:
+        if "site-packages" + os.sep in pathname or "site-packages/" in pathname:
+            for sep in [f"site-packages{os.sep}", "site-packages/"]:
                 if sep in pathname:
                     return pathname.split(sep)[-1]
 

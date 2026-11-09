@@ -2,23 +2,22 @@
 from enum import StrEnum
 
 from rich import print as rprint
-from rich.pretty import pprint as rpprint
 from rich.console import Console
+from rich.pretty import pprint as rpprint
 from rich.style import Style as RichStyle
-
 
 console = Console()
 cprint = console.print
 
 
 __all__ = (
-    'rprint',
-    'rpprint',
-    'cprint',
-    'console',
-    'RichColor',
-    'TextStyle',
-    'RichStyle',
+    "RichColor",
+    "RichStyle",
+    "TextStyle",
+    "console",
+    "cprint",
+    "rpprint",
+    "rprint",
 )
 
 
@@ -43,6 +42,7 @@ class TextStyle(SpacedStrEnum):
         TextStyle.BOLD + RichColor.RED
         TextStyle.BOLD + TextStyle.UNDERLINE + RichColor.CYAN
     """
+
     BOLD = "bold"
     DIM = "dim"
     ITALIC = "italic"
@@ -58,14 +58,15 @@ class TextStyle(SpacedStrEnum):
 
 class RichColor(SpacedStrEnum):
     """All available Rich named colors.
-    
+
     Can be used directly or combined with TextStyle:
         bar_style=RichColor.GREEN
         text_style=TextStyle.BOLD + RichColor.CYAN
-    
+
     Note: Rich also supports 256 colors via color(N) where N is 0-255,
     and hex colors via #RRGGBB format. These can be passed as strings.
     """
+
     # Standard colors
     BLACK = "black"
     RED = "red"
@@ -75,7 +76,7 @@ class RichColor(SpacedStrEnum):
     MAGENTA = "magenta"
     CYAN = "cyan"
     WHITE = "white"
-    
+
     # Bright variants
     BRIGHT_BLACK = "bright_black"
     BRIGHT_RED = "bright_red"
@@ -85,7 +86,7 @@ class RichColor(SpacedStrEnum):
     BRIGHT_MAGENTA = "bright_magenta"
     BRIGHT_CYAN = "bright_cyan"
     BRIGHT_WHITE = "bright_white"
-    
+
     # Color names (extended)
     GREY0 = "grey0"
     NAVY_BLUE = "navy_blue"

@@ -18,8 +18,8 @@ from pfund_kit.paths import ProjectPaths, _detect_project_layout
 @pytest.fixture
 def mock_home(tmp_path, monkeypatch):
     """Redirect Path.home() to tmp_path so user paths land under ~/.{project_name}/."""
-    monkeypatch.setenv('HOME', str(tmp_path))
-    monkeypatch.setenv('USERPROFILE', str(tmp_path))  # Windows equivalent
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # Windows equivalent
     return tmp_path
 
 
@@ -93,6 +93,7 @@ class TestDetectProjectLayout:
     def test_real_pfund_kit_layout(self):
         """Real package: detection works in dev and any install."""
         from pfund_kit import paths
+
         actual_file = Path(paths.__file__)
 
         project_name, package_path, _ = _detect_project_layout(actual_file)
@@ -109,13 +110,13 @@ class TestProjectPathsClass:
 
     def test_caller_auto_detection(self, mock_home):
         """source_file defaults to caller's __file__ when not provided."""
-        paths = ProjectPaths(project_name='test_project')
+        paths = ProjectPaths(project_name="test_project")
 
         # The caller here is test_paths.py, in tests/.
-        assert paths.package_path.name == 'tests'
-        assert paths.project_name == 'test_project'
-        assert paths.user_root == mock_home / '.test_project'
-        assert paths.log_path == mock_home / '.test_project' / 'logs'
+        assert paths.package_path.name == "tests"
+        assert paths.project_name == "test_project"
+        assert paths.user_root == mock_home / ".test_project"
+        assert paths.log_path == mock_home / ".test_project" / "logs"
 
     def test_src_layout_with_custom_name(self, tmp_path, mock_home):
         """ProjectPaths honors custom project name over auto-detected."""
@@ -124,13 +125,13 @@ class TestProjectPathsClass:
         module_file.parent.mkdir(parents=True)
         module_file.touch()
 
-        paths = ProjectPaths(project_name='custom_name', source_file=str(module_file))
+        paths = ProjectPaths(project_name="custom_name", source_file=str(module_file))
 
-        assert paths.project_name == 'custom_name'
+        assert paths.project_name == "custom_name"
         assert paths.package_path == package_dir
-        assert paths.user_root == mock_home / '.custom_name'
-        assert paths.log_path == mock_home / '.custom_name' / 'logs'
-        assert paths.data_path == mock_home / '.custom_name' / 'data'
+        assert paths.user_root == mock_home / ".custom_name"
+        assert paths.log_path == mock_home / ".custom_name" / "logs"
+        assert paths.data_path == mock_home / ".custom_name" / "data"
 
     def test_flat_layout_auto_detect(self, tmp_path, mock_home):
         """ProjectPaths with flat-layout auto-detects project name."""
@@ -141,9 +142,9 @@ class TestProjectPathsClass:
 
         paths = ProjectPaths(source_file=str(module_file))
 
-        assert paths.project_name == 'test_package'
+        assert paths.project_name == "test_package"
         assert paths.package_path == package_dir
-        assert paths.log_path == mock_home / '.test_package' / 'logs'
+        assert paths.log_path == mock_home / ".test_package" / "logs"
 
     def test_installed_layout(self, tmp_path, mock_home):
         """ProjectPaths with installed package layout (no pyproject.toml)."""
@@ -155,7 +156,7 @@ class TestProjectPathsClass:
 
         paths = ProjectPaths(source_file=str(module_file))
 
-        assert paths.project_name == 'installed_package'
+        assert paths.project_name == "installed_package"
         assert paths.package_path == package_dir
         assert paths.project_root is None
 
@@ -163,20 +164,20 @@ class TestProjectPathsClass:
         """User paths are identical across all layouts for a given project_name."""
         layouts = [
             tmp_path / "proj1" / "src" / "pkg1" / "mod.py",  # src-layout
-            tmp_path / "proj2" / "pkg2" / "mod.py",          # flat-layout
+            tmp_path / "proj2" / "pkg2" / "mod.py",  # flat-layout
             tmp_path / "site-packages" / "pkg3" / "mod.py",  # installed
         ]
         for module_file in layouts:
             module_file.parent.mkdir(parents=True)
             module_file.touch()
 
-            paths = ProjectPaths(project_name='unified', source_file=str(module_file))
+            paths = ProjectPaths(project_name="unified", source_file=str(module_file))
 
-            assert paths.user_root == mock_home / '.unified'
-            assert paths.log_path == mock_home / '.unified' / 'logs'
-            assert paths.data_path == mock_home / '.unified' / 'data'
-            assert paths.cache_path == mock_home / '.unified' / 'cache'
-            assert paths.config_path == mock_home / '.unified' / 'config'
+            assert paths.user_root == mock_home / ".unified"
+            assert paths.log_path == mock_home / ".unified" / "logs"
+            assert paths.data_path == mock_home / ".unified" / "data"
+            assert paths.cache_path == mock_home / ".unified" / "cache"
+            assert paths.config_path == mock_home / ".unified" / "config"
 
 
 class TestProjectPathsInheritance:
@@ -191,20 +192,22 @@ class TestProjectPathsInheritance:
 
         class PfundPaths(ProjectPaths):
             def __init__(self, source_file):
-                super().__init__(project_name='pfund', source_file=source_file)
+                super().__init__(project_name="pfund", source_file=source_file)
 
-            def _setup_paths(self, package_path: Path, project_root: Path | None = None):
+            def _setup_paths(
+                self, package_path: Path, project_root: Path | None = None
+            ):
                 super()._setup_paths(package_path, project_root)
                 # Add pfund-specific paths.
-                self.strategies_path = self.data_path / 'strategies'
-                self.models_path = self.data_path / 'models'
+                self.strategies_path = self.data_path / "strategies"
+                self.models_path = self.data_path / "models"
 
         paths = PfundPaths(source_file=str(module_file))
 
-        assert paths.project_name == 'pfund'
+        assert paths.project_name == "pfund"
         assert paths.package_path == package_dir
-        assert paths.strategies_path == mock_home / '.pfund' / 'data' / 'strategies'
-        assert paths.models_path == mock_home / '.pfund' / 'data' / 'models'
+        assert paths.strategies_path == mock_home / ".pfund" / "data" / "strategies"
+        assert paths.models_path == mock_home / ".pfund" / "data" / "models"
 
 
 class TestDerivedPaths:

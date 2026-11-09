@@ -10,17 +10,15 @@ class TelegramHandler(Handler):
 
     def emit(self, record):
         import telegram
-        
+
         bot = telegram.Bot(token=self.token)
-        bot.send_message(
-            self.chat_id,
-            text=self.format(record)
-        )
+        bot.send_message(self.chat_id, text=self.format(record))
 
 
 def get_telegram_bot_updates(token):
     import requests
-    url = f'https://api.telegram.org/bot{token}/getUpdates'
+
+    url = f"https://api.telegram.org/bot{token}/getUpdates"
     ret = requests.get(url)
     try:
         return ret.json()

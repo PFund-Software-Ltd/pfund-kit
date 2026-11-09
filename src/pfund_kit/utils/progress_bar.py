@@ -1,30 +1,40 @@
 # VIBE-CODED
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
+
     from rich.progress import TaskID
 
 import logging
 import os
 import sys
+from collections.abc import Sized
+
 from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
     Progress,
     SpinnerColumn,
-    TextColumn,
-    BarColumn,
     TaskProgressColumn,
-    MofNCompleteColumn,
-    TimeRemainingColumn,
+    TextColumn,
     TimeElapsedColumn,
+    TimeRemainingColumn,
 )
+
 from pfund_kit.style import RichColor, TextStyle
+
+# logging._StderrHandler is private (not in typeshed), () if it ever goes away
+_STDERR_HANDLER_TYPES: tuple[type, ...] = tuple(
+    t for t in [getattr(logging, "_StderrHandler", None)] if isinstance(t, type)
+)
 
 
 def _should_disable_progress() -> bool:
     """Check if progress bars should be disabled via environment variable."""
-    return os.getenv('PFUND_DISABLE_PROGRESS_BAR', '').lower() in ('1', 'true', 'yes')
+    return os.getenv("PFUND_DISABLE_PROGRESS_BAR", "").lower() in ("1", "true", "yes")
 
 
 class ProgressBar[T]:
@@ -35,7 +45,7 @@ class ProgressBar[T]:
         PFUND_DISABLE_PROGRESS_BAR=1 (or 'true' or 'yes'). This is useful when
         debugging with pdb or running in non-interactive environments.
     """
-    
+
     def __init__(
         self,
         iterable: Iterable[T] | None = None,
@@ -55,7 +65,7 @@ class ProgressBar[T]:
     ):
         """
         Create a progress bar.
-        
+
         Args:
             iterable: Optional iterable to track progress over.
             total: Total number of steps. Inferred from iterable if not provided.
@@ -66,7 +76,7 @@ class ProgressBar[T]:
             bar_finished_style: Style for the progress bar when finished. If None, uses bar_style.
             progress_style: Style for the percentage text.
             transient: If True, the progress bar disappears after completion.
-            show_time: Time display mode. False (default) = no time, 
+            show_time: Time display mode. False (default) = no time,
                       'elapsed' = show elapsed time, 'remaining' = show time remaining,
                       True = show both elapsed and remaining.
             redirect_stdout: If True, redirect stdout so prints won't break the progress bar.
@@ -77,7 +87,11 @@ class ProgressBar[T]:
         from pfund_kit.utils import get_notebook_type
 
         self._iterable = iterable
-        self._total = total if total is not None else (len(iterable) if hasattr(iterable, '__len__') else None)
+        self._total = (
+            total
+            if total is not None
+            else (len(iterable) if isinstance(iterable, Sized) else None)
+        )
         self._description = description
         self._transient = transient
         self._in_notebook = get_notebook_type() is not None
@@ -98,14 +112,16 @@ class ProgressBar[T]:
             SpinnerColumn(style=spinner_style),
             TextColumn(f"[{text_style}]{{task.description}}"),
             BarColumn(complete_style=bar_style, finished_style=bar_finished_style),
-            TaskProgressColumn(text_format=f"[{progress_style}]{{task.percentage:>3.0f}}%"),
+            TaskProgressColumn(
+                text_format=f"[{progress_style}]{{task.percentage:>3.0f}}%"
+            ),
             MofNCompleteColumn(),
         ]
 
         # Add time columns based on show_time parameter
-        if show_time == 'elapsed':
+        if show_time == "elapsed":
             columns.append(TimeElapsedColumn())
-        elif show_time == 'remaining':
+        elif show_time == "remaining":
             columns.append(TimeRemainingColumn())
         elif show_time is True:
             columns.append(TimeElapsedColumn())
@@ -119,12 +135,13 @@ class ProgressBar[T]:
             redirect_stderr=redirect_stderr,
         )
         self._task_id: TaskID | None = None
-    
+
     def __enter__(self) -> ProgressBar:
         if self._in_notebook:
             # In notebooks, use tqdm or simple percentage display
             try:
                 from tqdm.auto import tqdm
+
                 self._tqdm_bar = tqdm(
                     total=self._total,
                     desc=self._description,
@@ -140,10 +157,10 @@ class ProgressBar[T]:
         self._task_id = self._progress.add_task(self._description, total=self._total)
         self._patch_stream_handlers()
         return self
-    
+
     def __exit__(self, *args) -> None:
         if self._in_notebook:
-            if hasattr(self, '_tqdm_bar') and self._tqdm_bar is not None:
+            if hasattr(self, "_tqdm_bar") and self._tqdm_bar is not None:
                 self._tqdm_bar.close()
             return
 
@@ -151,30 +168,32 @@ class ProgressBar[T]:
             self._restore_stream_handlers()
         finally:
             self._progress.__exit__(*args)
-    
+
     def __iter__(self) -> Iterator[T]:
         if self._iterable is None:
             raise ValueError("No iterable provided to iterate over")
-        
+
         with self:
             for item in self._iterable:
                 yield item
                 self.advance()
-    
+
     def advance(self, amount: int = 1) -> None:
         """Advance the progress bar by the given amount."""
         if self._in_notebook:
-            if hasattr(self, '_tqdm_bar') and self._tqdm_bar is not None:
+            if hasattr(self, "_tqdm_bar") and self._tqdm_bar is not None:
                 self._tqdm_bar.update(amount)
             return
 
         if self._task_id is not None:
             self._progress.update(self._task_id, advance=amount)
-    
-    def update(self, *, description: str | None = None, total: int | None = None) -> None:
+
+    def update(
+        self, *, description: str | None = None, total: int | None = None
+    ) -> None:
         """Update the progress bar's description or total."""
         if self._in_notebook:
-            if hasattr(self, '_tqdm_bar') and self._tqdm_bar is not None:
+            if hasattr(self, "_tqdm_bar") and self._tqdm_bar is not None:
                 if description is not None:
                     self._tqdm_bar.set_description(description)
                 if total is not None:
@@ -183,11 +202,11 @@ class ProgressBar[T]:
             return
 
         if self._task_id is not None:
-            kwargs = {}
+            kwargs: dict[str, Any] = {}
             if description is not None:
-                kwargs['description'] = description
+                kwargs["description"] = description
             if total is not None:
-                kwargs['total'] = total
+                kwargs["total"] = total
             self._progress.update(self._task_id, **kwargs)
 
     def _patch_stream_handlers(self) -> None:
@@ -204,12 +223,20 @@ class ProgressBar[T]:
         for logger in _iter_loggers():
             for handler in logger.handlers:
                 # torch attaches _StderrHandler instances to its loggers; their stream is read-only.
-                if not isinstance(handler, logging.StreamHandler) or isinstance(handler, logging._StderrHandler):
+                if not isinstance(handler, logging.StreamHandler) or isinstance(
+                    handler, _STDERR_HANDLER_TYPES
+                ):
                     continue
-                if handler.stream in (sys.__stderr__, sys.stderr) and self._redirect_stderr:
+                if (
+                    handler.stream in (sys.__stderr__, sys.stderr)
+                    and self._redirect_stderr
+                ):
                     self._patched_handlers.append((handler, handler.stream))
                     handler.stream = sys.stderr
-                elif handler.stream in (sys.__stdout__, sys.stdout) and self._redirect_stdout:
+                elif (
+                    handler.stream in (sys.__stdout__, sys.stdout)
+                    and self._redirect_stdout
+                ):
                     self._patched_handlers.append((handler, handler.stream))
                     handler.stream = sys.stdout
 

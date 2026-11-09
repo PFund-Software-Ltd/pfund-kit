@@ -1,7 +1,8 @@
 # VIBE-CODED
 import logging
+from typing import ClassVar
 
-from pfund_kit.logging.formatters.ansi_styles import style_to_ansi, RESET
+from pfund_kit.logging.formatters.ansi_styles import RESET, style_to_ansi
 
 
 class ColoredFormatter(logging.Formatter):
@@ -19,22 +20,22 @@ class ColoredFormatter(logging.Formatter):
         logger.info("Success", style="bold green")
     """
 
-    DEFAULT_LEVEL_COLORS = {
-        'WARNING': '\033[1;93m',   # Bold Yellow
-        'ERROR': '\033[1;91m',     # Bold Red
-        'CRITICAL': '\033[1;95m',  # Bold Magenta
+    DEFAULT_LEVEL_COLORS: ClassVar[dict[str, str]] = {
+        "WARNING": "\033[1;93m",  # Bold Yellow
+        "ERROR": "\033[1;91m",  # Bold Red
+        "CRITICAL": "\033[1;95m",  # Bold Magenta
     }
 
     def format(self, record):
         log_message = super().format(record)
 
         # Check if record has custom style (set by ColoredLogger)
-        if hasattr(record, 'style') and record.style:
+        if hasattr(record, "style") and record.style:
             color_code = style_to_ansi(record.style)
-            end_code = RESET if color_code else ''
+            end_code = RESET if color_code else ""
         else:
             # Fall back to default level-based coloring
-            color_code = self.DEFAULT_LEVEL_COLORS.get(record.levelname, '')
-            end_code = RESET if color_code else ''
+            color_code = self.DEFAULT_LEVEL_COLORS.get(record.levelname, "")
+            end_code = RESET if color_code else ""
 
         return f"{color_code}{log_message}{end_code}"

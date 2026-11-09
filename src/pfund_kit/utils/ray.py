@@ -33,6 +33,7 @@ def setup_ray():
     import os
 
     import ray
+
     from pfund_kit.style import RichColor, TextStyle, cprint
 
     with _INIT_LOCK:

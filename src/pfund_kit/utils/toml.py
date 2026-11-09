@@ -7,17 +7,18 @@ Provides simple read/write functions for TOML files with support for:
 - Path (serialized as strings)
 - StrEnum (serialized as strings)
 """
+
+from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
-from decimal import Decimal
 from typing import Any, Literal
 
 import tomlkit
 
-
 # =============================================================================
 # Type Conversion Helpers
 # =============================================================================
+
 
 def _prepare_for_toml(
     data: Any,
@@ -43,31 +44,34 @@ def _prepare_for_toml(
     # and converted back to None on load (see _toml_to_python)
     if data is None:
         return "None"
-    elif isinstance(data, Decimal):
-        return str(data)
-    elif isinstance(data, Path):
-        return str(data)
-    elif isinstance(data, StrEnum):
+    elif isinstance(data, (Decimal, Path, StrEnum)):
         return str(data)
     elif isinstance(data, dict):
         # Check if this dict should be an inline table:
         # 1. Explicitly listed in inline_keys, OR
         # 2. auto_inline is True and we're past the first level (depth > 1)
-        should_inline = (inline_keys and current_key in inline_keys) or (auto_inline and _depth > 1)
+        should_inline = (inline_keys and current_key in inline_keys) or (
+            auto_inline and _depth > 1
+        )
 
         if should_inline:
             inline = tomlkit.inline_table()
-            inline.update({
-                k: _prepare_for_toml(v, inline_keys, k, auto_inline, _depth + 1)
-                for k, v in data.items()
-            })
+            inline.update(
+                {
+                    k: _prepare_for_toml(v, inline_keys, k, auto_inline, _depth + 1)
+                    for k, v in data.items()
+                }
+            )
             return inline
         return {
             k: _prepare_for_toml(v, inline_keys, k, auto_inline, _depth + 1)
             for k, v in data.items()
         }
     elif isinstance(data, (list, tuple)):
-        return [_prepare_for_toml(item, inline_keys, None, auto_inline, _depth) for item in data]
+        return [
+            _prepare_for_toml(item, inline_keys, None, auto_inline, _depth)
+            for item in data
+        ]
     else:
         return data
 
@@ -96,6 +100,7 @@ def _toml_to_python(data: Any) -> Any:
 # =============================================================================
 # Convenience Functions
 # =============================================================================
+
 
 def load(file_path: str | Path, to_python: bool = True) -> dict | None:
     """
@@ -128,7 +133,7 @@ def load(file_path: str | Path, to_python: bool = True) -> dict | None:
         return None
 
     # Load file
-    with open(path, 'r') as f:
+    with open(path) as f:
         data = tomlkit.load(f)
 
     # Convert to plain Python types if requested
@@ -208,12 +213,15 @@ def dump(
     elif mode == "merge":
         # Merge mode: deep merge (old keys within sections persist)
         from pfund_kit.utils import deep_merge
+
         existing_data = load(file_path, to_python=True) or {}
         final_data = deep_merge(existing_data, data)
     else:
-        raise ValueError(f"Invalid mode: {mode}. Must be 'overwrite', 'update', or 'merge'.")
+        raise ValueError(
+            f"Invalid mode: {mode}. Must be 'overwrite', 'update', or 'merge'."
+        )
 
     # Prepare and write
     prepared_data = _prepare_for_toml(final_data, inline_set, auto_inline=auto_inline)
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         tomlkit.dump(prepared_data, f)

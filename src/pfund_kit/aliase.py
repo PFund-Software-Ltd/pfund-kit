@@ -1,7 +1,7 @@
 # VIBE-CODED
 from __future__ import annotations
 
-from typing import Iterator
+from collections.abc import Iterator
 
 
 class AliasRegistry:
@@ -67,7 +67,9 @@ class AliasRegistry:
         for alias, canonical in aliases.items():
             self._add_mapping(alias, canonical, allow_conflicts=allow_conflicts)
 
-    def _add_mapping(self, alias: str, canonical: str, allow_conflicts: bool = False) -> None:
+    def _add_mapping(
+        self, alias: str, canonical: str, allow_conflicts: bool = False
+    ) -> None:
         """Add a single alias → canonical mapping with conflict detection."""
         norm_alias = self._normalize(alias)
         norm_canonical = self._normalize(canonical)
@@ -280,4 +282,4 @@ class AliasRegistry:
         return f"AliasRegistry({len(self)} mappings):\n" + "\n".join(items)
 
 
-__all__ = ['AliasRegistry']
+__all__ = ["AliasRegistry"]

@@ -7,10 +7,10 @@ allowing users to call commands directly without prefixing the project name.
 import click
 
 # Import shared commands from pfund-kit
-from pfund_kit.cli.commands import config, docker_compose, remove, doc
+from pfund_kit.cli.commands import config, docker_compose, remove
 
 # Shared commands that will be added to shell_group and excluded from project groups
-SHARED_COMMANDS = [config, docker_compose, remove, doc]
+SHARED_COMMANDS = [config, docker_compose, remove]
 
 
 class ShellCommandCollection(click.CommandCollection):
@@ -19,23 +19,27 @@ class ShellCommandCollection(click.CommandCollection):
     This allows users to type commands directly at the pfund-shell> prompt
     without needing to specify the project name, as long as there's no ambiguity.
 
-    Shared commands from pfund-kit (config, docker-compose, remove, doc) are
+    Shared commands from pfund-kit (config, docker-compose, remove) are
     excluded from individual projects to avoid conflicts, since they're available
     as shell built-ins.
     """
 
     # Command names (and their aliases) to exclude from project groups (derived from SHARED_COMMANDS)
-    SHARED_COMMAND_NAMES = {cmd.name for cmd in SHARED_COMMANDS} | {'tui', 'compose', 'rm'}
+    SHARED_COMMAND_NAMES = {cmd.name for cmd in SHARED_COMMANDS} | {
+        "tui",
+        "compose",
+        "rm",
+    }
 
-    def get_command(self, ctx, name):
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
         """Get a command by name, searching through all source groups."""
         # Skip shared commands - they're handled separately
-        if name in self.SHARED_COMMAND_NAMES:
+        if cmd_name in self.SHARED_COMMAND_NAMES:
             return None
 
         # Search through all registered command groups
         for source in self.sources:
-            command = source.get_command(ctx, name)
+            command = source.get_command(ctx, cmd_name)
             if command:
                 return command
         return None
@@ -57,6 +61,7 @@ class ShellCommandCollection(click.CommandCollection):
 
 def create_pfund_shell_group(command_groups: dict):
     """Create the shell group after command_groups is populated."""
+
     @click.group(cls=ShellCommandCollection, sources=list(command_groups.values()))
     def pfund_shell_group():
         pass

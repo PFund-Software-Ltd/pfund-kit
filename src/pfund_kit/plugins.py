@@ -41,8 +41,12 @@ class PluginRegistry:
             for ep in entry_points(group=self.group):
                 name = ep.name.upper()
                 if name in eps:
-                    dists = [e.dist.name if e.dist else "unknown" for e in (eps[name], ep)]
-                    raise ValueError(f"{self.kind} {name} is registered by multiple packages: {dists}")
+                    dists = [
+                        e.dist.name if e.dist else "unknown" for e in (eps[name], ep)
+                    ]
+                    raise ValueError(
+                        f"{self.kind} {name} is registered by multiple packages: {dists}"
+                    )
                 eps[name] = ep
             self._entry_points = eps
         return self._entry_points
@@ -66,7 +70,9 @@ class PluginRegistry:
         return self.get_entry_point(name).load()
 
 
-def import_official_plugin(module: str, attr: str, *, label: str = "", install: str = "") -> Any:
+def import_official_plugin(
+    module: str, attr: str, *, label: str = "", install: str = ""
+) -> Any:
     """Imports `attr` from an official plugin's `module`, with an install hint if the plugin is missing.
 
     Args:

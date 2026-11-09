@@ -1,8 +1,11 @@
 import inspect
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
 
 
-def get_function_signature(function: object, skip_self_and_cls: bool=True) -> inspect.Signature:
+def get_function_signature(
+    function: Callable[..., Any], skip_self_and_cls: bool = True
+) -> inspect.Signature:
     """
     Returns the function signature.
 
@@ -12,7 +15,7 @@ def get_function_signature(function: object, skip_self_and_cls: bool=True) -> in
     if skip_self_and_cls and signature.parameters:
         # Get first parameter name
         first_param_name = next(iter(signature.parameters))
-        if first_param_name in ('self', 'cls'):
+        if first_param_name in ("self", "cls"):
             # Remove only the first parameter
             params = list(signature.parameters.values())[1:]
             signature = signature.replace(parameters=params)
@@ -21,7 +24,7 @@ def get_function_signature(function: object, skip_self_and_cls: bool=True) -> in
 
 def get_function_args_and_kwargs(
     function: Callable[..., Any],
-    skip_self_and_cls: bool=True,
+    skip_self_and_cls: bool = True,
 ) -> tuple[list[str], dict[str, Any], str | None, str | None]:
     """
     Parses the function's signature into:

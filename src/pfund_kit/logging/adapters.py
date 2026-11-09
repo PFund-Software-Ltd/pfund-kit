@@ -1,6 +1,5 @@
-from typing import Any
-
 from logging import Logger, LoggerAdapter
+from typing import Any
 
 
 class PrefixLoggerAdapter(LoggerAdapter):
@@ -15,6 +14,7 @@ class PrefixLoggerAdapter(LoggerAdapter):
         >>> logger.debug("get_balances raw response: ...")
         # -> "[REST] get_balances raw response: ..."
     """
+
     def __init__(self, logger: Logger, prefix: str):
         super().__init__(logger, {})
         self._prefix = prefix

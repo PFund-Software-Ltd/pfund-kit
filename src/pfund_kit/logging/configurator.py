@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
+
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from pathlib import Path
 
 import copy
@@ -21,7 +24,13 @@ class LoggingDictConfigurator(DictConfigurator):
     use_colored_logger: bool = True
 
     @classmethod
-    def create(cls, log_path: Path, logging_config: dict[str, Any], lazy: bool = False, use_colored_logger: bool = True) -> LoggingDictConfigurator:
+    def create(
+        cls,
+        log_path: Path,
+        logging_config: dict[str, Any],
+        lazy: bool = False,
+        use_colored_logger: bool = True,
+    ) -> LoggingDictConfigurator:
         """
         Factory method to create a configurator with proper class variable setup.
 
@@ -46,44 +55,52 @@ class LoggingDictConfigurator(DictConfigurator):
 
         # remove file handlers before passing to __init__
         # as they are configured in _configure_file_handler with correct filenames based on configured log_path
-        handlers: list[str] = list(config.get('handlers', {}))
+        handlers: list[str] = list(config.get("handlers", {}))
         for handler_name in handlers:
-            if handler_name.endswith('file_handler'):
-                del config['handlers'][handler_name]
+            if handler_name.endswith("file_handler"):
+                del config["handlers"][handler_name]
 
         return cls(config)
-    
-    def add_handlers(self, logger: logging.Logger, handlers: list[str]):
+
+    def add_handlers(self, logger: logging.Logger, handlers: Iterable[str]) -> None:
         """Add handlers to a logger from a list of names."""
         for handler_name in handlers:
             try:
-                if handler_name.endswith('file_handler'):
+                if handler_name.endswith("file_handler"):
                     handler = self._configure_file_handler(logger.name, handler_name)
                     # Check if rollover is already overdue and perform it immediately.
-                    if isinstance(handler, TimedRotatingFileHandler):
-                        if handler.shouldRollover(None):
-                            handler.doRollover()
+                    if isinstance(
+                        handler, TimedRotatingFileHandler
+                    ) and handler.shouldRollover(logging.makeLogRecord({})):
+                        handler.doRollover()
                 else:
                     # self.config was created in super().__init__, get handler from it
-                    handler = self.config['handlers'][handler_name]
+                    handler = self.config["handlers"][handler_name]
                 logger.addHandler(handler)
             except Exception as e:
-                raise ValueError('Unable to add handler %r' % handler_name) from e
+                raise ValueError(f"Unable to add handler {handler_name!r}") from e
 
-    def _configure_file_handler(self, logger_name: str, handler_name: str) -> logging.FileHandler:
-        logging_config: dict = self.logging_config
+    def _configure_file_handler(
+        self, logger_name: str, handler_name: str
+    ) -> logging.Handler:
+        logging_config = self.logging_config
+        log_path = self.log_path
+        if logging_config is None or log_path is None:
+            raise RuntimeError(
+                "LoggingDictConfigurator must be created via LoggingDictConfigurator.create()"
+            )
         # copy handler config so we can pop keys without modifying the original
-        handler_config: dict = dict(logging_config['handlers'][handler_name])
+        handler_config: dict = dict(logging_config["handlers"][handler_name])
 
         # configure filename
         # filename = time.strftime(f'{log_path}/{logger_name}.{filename_format}.log')
-        filename = self.log_path / f'{logger_name}.log'
+        filename = log_path / f"{logger_name}.log"
 
         # pop reserved keys (following Python's DictConfigurator.configure_handler pattern)
-        handler_class = handler_config.pop('class')
-        level = handler_config.pop('level', None)
-        formatter_name = handler_config.pop('formatter', 'file')
-        filter_names = handler_config.pop('filters', [])
+        handler_class = handler_config.pop("class")
+        level = handler_config.pop("level", None)
+        formatter_name = handler_config.pop("formatter", "file")
+        filter_names = handler_config.pop("filters", [])
         # remaining keys are constructor kwargs
         handler_kwargs = handler_config
 
@@ -99,24 +116,26 @@ class LoggingDictConfigurator(DictConfigurator):
             )
         else:
             # resolve handler class and instantiate immediately
-            Handler = self.resolve(handler_class)
-            fh = Handler(filename, **handler_kwargs)
+            handler_cls = self.resolve(handler_class)
+            fh = handler_cls(filename, **handler_kwargs)
 
         # for convention, since logging.config also gives the handlers names
         fh.name = handler_name
 
         # configure formatter
-        formatter = self.configure_formatter(logging_config['formatters'][formatter_name])
+        formatter = self.configure_formatter(
+            logging_config["formatters"][formatter_name]
+        )
         fh.setFormatter(formatter)
 
         # configure level
         if level is not None:
-            fh.setLevel(logging._checkLevel(level))
+            fh.setLevel(level)
 
         # Add filters if specified in config
         for filter_name in filter_names:
             # Make a copy because configure_filter mutates the dict
-            filter_config = copy.copy(logging_config['filters'][filter_name])
+            filter_config = copy.copy(logging_config["filters"][filter_name])
             filter_obj = self.configure_filter(filter_config)
             fh.addFilter(filter_obj)
 

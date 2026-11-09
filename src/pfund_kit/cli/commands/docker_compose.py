@@ -1,16 +1,16 @@
 import os
-import subprocess
 import shutil
+import subprocess
 
 import click
 
 
 @click.command(
-    name='docker-compose',
+    name="docker-compose",
     context_settings=dict(
         ignore_unknown_options=True,
         allow_extra_args=True,
-    )
+    ),
 )
 @click.pass_context
 def docker_compose(ctx):
@@ -26,12 +26,14 @@ def docker_compose(ctx):
         pfeed docker-compose down        # Stop and remove services
     """
     # Check if docker is installed
-    if not shutil.which('docker'):
+    if not shutil.which("docker"):
         click.echo("Error: docker is not installed or not in PATH", err=True)
-        click.echo("Please install Docker: https://docs.docker.com/get-docker/", err=True)
+        click.echo(
+            "Please install Docker: https://docs.docker.com/get-docker/", err=True
+        )
         ctx.exit(1)
 
-    config = ctx.obj['config']
+    config = ctx.obj["config"]
     compose_file_path = config.docker_compose_file_path
 
     # Check if compose file exists
@@ -39,7 +41,7 @@ def docker_compose(ctx):
         click.echo(f"Error: compose.yaml not found at {compose_file_path}", err=True)
         ctx.exit(1)
 
-    click.echo(f'Using compose.yaml from: {compose_file_path}')
+    click.echo(f"Using compose.yaml from: {compose_file_path}")
 
     # Let the project-specific config prepare the docker context
     # (e.g., set env vars, ensure directories exist, check prerequisites)
@@ -47,7 +49,7 @@ def docker_compose(ctx):
 
     # Build the docker compose command with the config's compose file
     # Use 'docker compose' (plugin) instead of deprecated 'docker-compose' (standalone)
-    command = ['docker', 'compose', '--file', str(compose_file_path)] + ctx.args
+    command = ["docker", "compose", "--file", str(compose_file_path), *ctx.args]
 
     # Run docker compose with the current environment
     result = subprocess.run(command, env=os.environ)
