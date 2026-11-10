@@ -3436,7 +3436,7 @@ packages:
   - pydantic>=2.12.5
   - python-dotenv>=1.2.4
   - prompt-toolkit>=3.0.53
-  - pytz>=2026.6
+  - pytz>=2026.1
   requires_python: '>=3.13'
 - pypi: https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl
   name: h11
