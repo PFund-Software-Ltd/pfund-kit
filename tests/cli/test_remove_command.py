@@ -230,7 +230,7 @@ def test_no_case_insensitive_fallback(layout: SimpleNamespace) -> None:
     assert (layout.data / "backup.db").exists()
 
 
-# --- #6: ClickException errors, missing base, logs alias, help text ---
+# --- #6: ClickException errors, missing base, no logs alias, help text ---
 
 
 def test_errors_are_click_exceptions(layout: SimpleNamespace) -> None:
@@ -257,11 +257,13 @@ def test_filesystem_error_becomes_click_error(layout: SimpleNamespace) -> None:
     assert (layout.data / "backup.db").exists()
 
 
-def test_logs_is_an_alias_of_log(layout: SimpleNamespace) -> None:
+def test_logs_is_not_an_alias(layout: SimpleNamespace) -> None:
+    """Only `log` exists, so the shell menu shows one name."""
     (layout.config.log_path / "app.log").write_text("x")
     result = _run(layout, "logs", "app.log", "--yes")
-    assert result.exit_code == 0, result.output
-    assert not (layout.config.log_path / "app.log").exists()
+    assert result.exit_code == 2
+    assert "No such command 'logs'" in result.output
+    assert (layout.config.log_path / "app.log").exists()
 
 
 def test_help_examples_are_not_rewrapped_or_pfeed_specific(

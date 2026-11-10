@@ -7,6 +7,10 @@ from typing import Literal, cast
 import click
 from click import Command, Context, Group
 
+# CLI-only commands, not offered or run inside pfund-shell: `tui` opens a
+# full-screen app (trogon) that fights the shell's own prompt for the terminal
+SHELL_DISABLED_COMMANDS = frozenset({"tui"})
+
 
 def discover_command_groups() -> dict[str, click.Group]:
     """Discover command groups registered via entry points.
@@ -64,6 +68,24 @@ def is_group_command(
     return isinstance(cmd, click.Group)
 
 
+def shell_commands(group: Group) -> list[tuple[str, Command]]:
+    """(name, command) pairs to offer in the shell's completion and toolbar.
+
+    Drops SHELL_DISABLED_COMMANDS, and when a command is registered under an
+    alias too, keeps only the alias (`rm`, not `remove`; `compose`, not
+    `docker-compose`) to keep the menu short. Every name still runs if typed.
+    """
+    aliased = {
+        id(command) for name, command in group.commands.items() if name != command.name
+    }
+    return [
+        (name, command)
+        for name, command in group.commands.items()
+        if name not in SHELL_DISABLED_COMMANDS
+        and not (name == command.name and id(command) in aliased)
+    ]
+
+
 def _convert_click_command_to_dict(
     name: str, command: Command | Group, dict_value: Literal["help"] | None = None
 ) -> dict:
@@ -88,7 +110,7 @@ def _convert_click_command_to_dict(
     commands_dict = {}
     if isinstance(command, Group):
         subcommands_dict: dict = {}
-        for sub_name, sub_command in command.commands.items():
+        for sub_name, sub_command in shell_commands(command):
             subcommands_dict.update(
                 _convert_click_command_to_dict(sub_name, sub_command, dict_value)
             )
@@ -139,7 +161,7 @@ def get_commands_dict(
         # Skip adding the group if we're already inside it (e.g., don't show "pfeed" when in pfeed>)
         if base_command != group_name:
             commands_dict[group_name] = {}
-            for name, command_obj in command_group.commands.items():
+            for name, command_obj in shell_commands(command_group):
                 commands_dict[group_name].update(
                     _convert_click_command_to_dict(name, command_obj, dict_value)
                 )
@@ -153,7 +175,7 @@ def get_commands_dict(
                 current_group = cast(Group, current_group.commands[context_command])
 
             # Add commands from current context at root level for easier access
-            for name, command_obj in current_group.commands.items():
+            for name, command_obj in shell_commands(current_group):
                 commands_dict.update(
                     _convert_click_command_to_dict(name, command_obj, dict_value)
                 )

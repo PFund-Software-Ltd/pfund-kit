@@ -12,24 +12,22 @@ HIDDEN_COMMANDS = ["help", "tutorial", "clear", "exit", "quit", "q"]
 
 
 def format_commands_menu(commands, width=10, line_width=80):
-    """Format the list into a nicely spaced menu that fits the terminal width."""
-    rows = []
-    current_row = []
-    current_length = 0
+    """Format the list into aligned columns that fit the terminal width.
 
-    for command in commands:
-        padded_command = command.ljust(width)
-        if current_length + len(padded_command) > line_width:
-            rows.append(" ".join(current_row))
-            current_row = []
-            current_length = 0
-
-        current_row.append(padded_command)
-        current_length += len(padded_command)
-
-    if current_row:
-        rows.append(" ".join(current_row))
-
+    prompt_toolkit truncates (doesn't wrap) toolbar lines wider than the
+    terminal, so every row must fit within line_width, separators included.
+    """
+    commands = list(commands)
+    if not commands:
+        return ""
+    # one column width for all, so a long name (docker-compose) can't misalign
+    col_width = max(width, *(len(command) for command in commands))
+    # n columns take n * col_width + (n - 1) separators
+    per_row = max(1, (line_width + 1) // (col_width + 1))
+    rows = [
+        " ".join(c.ljust(col_width) for c in commands[i : i + per_row]).rstrip()
+        for i in range(0, len(commands), per_row)
+    ]
     return "\n".join(rows)
 
 

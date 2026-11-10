@@ -13,6 +13,7 @@ from pfund_kit.pfund_shell.help import display_help
 from pfund_kit.pfund_shell.toolbar import bottom_toolbar
 from pfund_kit.pfund_shell.tutorial import display_tutorial
 from pfund_kit.pfund_shell.utils import (
+    SHELL_DISABLED_COMMANDS,
     discover_command_groups,
     get_commands_dict,
     is_group_command,
@@ -155,6 +156,23 @@ def start_shell():
                 else:
                     # Exit shell entirely
                     break
+
+            # e.g. "tui" (root or pfeed>) or "pfeed tui"
+            if first_command in command_groups and len(command_splits) > 1:
+                command_name, project = command_splits[1], first_command
+            else:
+                command_name = first_command
+                project = (
+                    base_command
+                    if base_command != "pfund-shell"
+                    else next(iter(command_groups))
+                )
+            if not context_commands and command_name in SHELL_DISABLED_COMMANDS:
+                click.echo(
+                    f"'{command_name}' is not available in pfund-shell, "
+                    f"run '{project} {command_name}' in your terminal instead."
+                )
+                continue
 
             # Route the command
             # Check if user is switching to a registered command group

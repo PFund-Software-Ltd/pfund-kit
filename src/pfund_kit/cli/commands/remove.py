@@ -201,7 +201,7 @@ def data(ctx: click.Context, target: str | None, yes: bool) -> None:
 @click.argument("target", type=str, required=False)
 @_yes_option
 def log(ctx: click.Context, target: str | None, yes: bool) -> None:
-    """Remove log directory or specific log files/folders. Alias: logs.
+    """Remove log directory or specific log files/folders.
 
     \b
     Examples:
@@ -211,7 +211,3 @@ def log(ctx: click.Context, target: str | None, yes: bool) -> None:
         remove log app -y         # Same, without asking
     """
     _remove_path(ctx.obj["config"].log_path, target, "Log", yes=yes)
-
-
-# the directory is named "logs" (see paths.py), so accept that too
-remove.add_command(log, name="logs")
