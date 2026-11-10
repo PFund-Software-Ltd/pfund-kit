@@ -1,3 +1,9 @@
+## [0.1.25](https://github.com/PFund-Software-Ltd/pfund-kit/compare/v0.1.24...v0.1.25) - 2026-11-10
+
+### 🐛 Bug Fixes
+
+- *(deps)* Lower pytz floor to 2026.1 for pyodide compatibility
+
 ## [0.1.24](https://github.com/PFund-Software-Ltd/pfund-kit/compare/v0.1.23...v0.1.24) - 2026-11-10
 
 ### 🐛 Bug Fixes
